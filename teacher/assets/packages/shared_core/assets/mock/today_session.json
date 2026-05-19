@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-14",
+  "subject": "Mathematics",
+  "chapter": "Fractions",
+  "day_of_week": 2,
+  "total_days": 4,
+  "students": [
+    { "id": "s001", "name": "Aarav Patel", "status": "in_progress", "level": "L2", "time_spent_seconds": 125, "last_question": "Fractions as parts of a whole" },
+    { "id": "s002", "name": "Diya Shah", "status": "done", "level": "L3", "time_spent_seconds": 180, "last_question": "Equivalent Fractions" },
+    { "id": "s003", "name": "Krish Mehta", "status": "done", "level": "L1", "time_spent_seconds": 140, "last_question": "Identifying Halves" },
+    { "id": "s004", "name": "Ananya Joshi", "status": "absent", "level": "L2", "time_spent_seconds": 0, "last_question": "" },
+    { "id": "s005", "name": "Rohan Desai", "status": "pending", "level": "L4", "time_spent_seconds": 0, "last_question": "" },
+    { "id": "s006", "name": "Priya Trivedi", "status": "pending", "level": "L2", "time_spent_seconds": 0, "last_question": "" },
+    { "id": "s007", "name": "Arjun Dave", "status": "pending", "level": "L1", "time_spent_seconds": 0, "last_question": "" },
+    { "id": "s008", "name": "Mira Parmar", "status": "pending", "level": "L3", "time_spent_seconds": 0, "last_question": "" },
+    { "id": "s009", "name": "Dev Gandhi", "status": "pending", "level": "L2", "time_spent_seconds": 0, "last_question": "" },
+    { "id": "s010", "name": "Kavya Raval", "status": "pending", "level": "L2", "time_spent_seconds": 0, "last_question": "" }
+  ]
+}

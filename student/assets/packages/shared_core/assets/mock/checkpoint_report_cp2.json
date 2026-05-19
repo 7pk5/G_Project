@@ -1,0 +1,150 @@
+{
+  "checkpoint": "CP2",
+  "generated_date": "2026-10-01",
+  "ideal_path_level": "L2",
+  "student_profiles": [
+    {
+      "id": "s001",
+      "name": "Aarav Patel",
+      "levels": {
+        "Mathematics": "L2",
+        "Science": "L2",
+        "Language": "L1",
+        "Social Studies": "L2"
+      },
+      "status": "On track"
+    },
+    {
+      "id": "s002",
+      "name": "Diya Shah",
+      "levels": {
+        "Mathematics": "L3",
+        "Science": "L3",
+        "Language": "L2",
+        "Social Studies": "L3"
+      },
+      "status": "Ahead"
+    },
+    {
+      "id": "s003",
+      "name": "Krish Mehta",
+      "levels": {
+        "Mathematics": "L1",
+        "Science": "L2",
+        "Language": "L1",
+        "Social Studies": "L1"
+      },
+      "status": "Behind"
+    },
+    {
+      "id": "s004",
+      "name": "Ananya Joshi",
+      "levels": {
+        "Mathematics": "L2",
+        "Science": "L2",
+        "Language": "L2",
+        "Social Studies": "L2"
+      },
+      "status": "On track"
+    },
+    {
+      "id": "s005",
+      "name": "Rohan Desai",
+      "levels": {
+        "Mathematics": "L4",
+        "Science": "L3",
+        "Language": "L3",
+        "Social Studies": "L2"
+      },
+      "status": "Ahead"
+    },
+    {
+      "id": "s006",
+      "name": "Priya Trivedi",
+      "levels": {
+        "Mathematics": "L2",
+        "Science": "L1",
+        "Language": "L2",
+        "Social Studies": "L2"
+      },
+      "status": "On track"
+    },
+    {
+      "id": "s007",
+      "name": "Arjun Dave",
+      "levels": {
+        "Mathematics": "L1",
+        "Science": "L1",
+        "Language": "L1",
+        "Social Studies": "L1"
+      },
+      "status": "Behind"
+    },
+    {
+      "id": "s008",
+      "name": "Mira Parmar",
+      "levels": {
+        "Mathematics": "L3",
+        "Science": "L3",
+        "Language": "L4",
+        "Social Studies": "L3"
+      },
+      "status": "Ahead"
+    },
+    {
+      "id": "s009",
+      "name": "Dev Gandhi",
+      "levels": {
+        "Mathematics": "L2",
+        "Science": "L2",
+        "Language": "L2",
+        "Social Studies": "L2"
+      },
+      "status": "On track"
+    },
+    {
+      "id": "s010",
+      "name": "Kavya Raval",
+      "levels": {
+        "Mathematics": "L2",
+        "Science": "L2",
+        "Language": "L2",
+        "Social Studies": "L2"
+      },
+      "status": "On track"
+    }
+  ],
+  "class_weaknesses": [
+    {
+      "subject": "Mathematics",
+      "status": "Most children at L2",
+      "below_ideal": 2,
+      "total": 10
+    },
+    {
+      "subject": "Language",
+      "status": "Mixed - L1 and L2",
+      "below_ideal": 3,
+      "total": 10
+    },
+    {
+      "subject": "Science",
+      "status": "Mostly on track",
+      "below_ideal": 2,
+      "total": 10
+    },
+    {
+      "subject": "Social Studies",
+      "status": "Mostly on track",
+      "below_ideal": 2,
+      "total": 10
+    }
+  ],
+  "incomplete_assessments": [
+    {
+      "id": "s011",
+      "name": "Rahul Verma",
+      "detail": "2 sessions completed - absent 3 weeks. Maths, Science, Social Studies not assessed this period."
+    }
+  ]
+}

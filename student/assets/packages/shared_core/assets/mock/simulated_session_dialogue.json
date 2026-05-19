@@ -1,0 +1,51 @@
+[
+  {
+    "stage": "greeting",
+    "audio_file": "greeting.m4a",
+    "text": "Hi Aarav, welcome back! Today we're going to talk about fractions. Ready?",
+    "duration_ms": 4000,
+    "requires_tap": false,
+    "visual_aid": null
+  },
+  {
+    "stage": "question_1",
+    "audio_file": "question_1.m4a",
+    "text": "If you have a chocolate bar cut into 4 equal pieces and you eat 2, what fraction did you eat?",
+    "duration_ms": 6000,
+    "requires_tap": true,
+    "visual_aid": "chocolate_4_2"
+  },
+  {
+    "stage": "evaluating_1",
+    "audio_file": null,
+    "text": "Miko is thinking...",
+    "duration_ms": 1500,
+    "requires_tap": false,
+    "visual_aid": "chocolate_4_2"
+  },
+  {
+    "stage": "follow_up",
+    "audio_file": "follow_up.m4a",
+    "text": "Great, you got that right! Now, what if you ate 3 out of 4 pieces?",
+    "duration_ms": 4500,
+    "requires_tap": true,
+    "visual_aid": "chocolate_4_3"
+  },
+  {
+    "stage": "evaluating_2",
+    "audio_file": null,
+    "text": "Miko is thinking...",
+    "duration_ms": 1500,
+    "requires_tap": false,
+    "visual_aid": "chocolate_4_3",
+    "triggers_level_up": true
+  },
+  {
+    "stage": "closing",
+    "audio_file": "closing.m4a",
+    "text": "Excellent! You really understand fractions. See you next Monday for science!",
+    "duration_ms": 5000,
+    "requires_tap": false,
+    "visual_aid": "star_burst"
+  }
+]

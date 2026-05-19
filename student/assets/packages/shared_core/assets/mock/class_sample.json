@@ -1,0 +1,235 @@
+{
+  "grade": 5,
+  "section": "B",
+  "students": [
+    {
+      "id": "s001",
+      "roll_no": 1,
+      "name": "Aarav Patel",
+      "avatar_color": "#E85D55",
+      "current_levels": {
+        "Mathematics": 2,
+        "Science": 2,
+        "Language": 1,
+        "Social Studies": 2
+      },
+      "flagged_concepts": [
+        {
+          "subject": "Mathematics",
+          "concept": "Multiplication with carry-over",
+          "note": "Aarav is stuck on 'multiplication with carry-over'. The AI has tried 3 different approaches."
+        }
+      ],
+      "recent_sessions": [
+        {
+          "date": "2026-10-12",
+          "subject": "Science",
+          "concept": "Plant Life Cycle",
+          "outcome": "Advanced to L2"
+        },
+        {
+          "date": "2026-10-05",
+          "subject": "Mathematics",
+          "concept": "Multiplication with carry-over",
+          "outcome": "Stuck at L2"
+        }
+      ]
+    },
+    {
+      "id": "s002",
+      "roll_no": 2,
+      "name": "Diya Shah",
+      "avatar_color": "#4A3FB7",
+      "current_levels": {
+        "Mathematics": 3,
+        "Science": 3,
+        "Language": 2,
+        "Social Studies": 3
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s003",
+      "roll_no": 3,
+      "name": "Krish Mehta",
+      "avatar_color": "#1D9E75",
+      "current_levels": {
+        "Mathematics": 1,
+        "Science": 2,
+        "Language": 1,
+        "Social Studies": 1
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s004",
+      "roll_no": 4,
+      "name": "Ananya Joshi",
+      "avatar_color": "#EF9F27",
+      "current_levels": {
+        "Mathematics": 2,
+        "Science": 2,
+        "Language": 2,
+        "Social Studies": 2
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s005",
+      "roll_no": 5,
+      "name": "Rohan Desai",
+      "avatar_color": "#E85D55",
+      "current_levels": {
+        "Mathematics": 4,
+        "Science": 3,
+        "Language": 3,
+        "Social Studies": 2
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s006",
+      "roll_no": 6,
+      "name": "Priya Trivedi",
+      "avatar_color": "#4A3FB7",
+      "current_levels": {
+        "Mathematics": 2,
+        "Science": 1,
+        "Language": 2,
+        "Social Studies": 2
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s007",
+      "roll_no": 7,
+      "name": "Arjun Dave",
+      "avatar_color": "#1D9E75",
+      "current_levels": {
+        "Mathematics": 1,
+        "Science": 1,
+        "Language": 1,
+        "Social Studies": 1
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s008",
+      "roll_no": 8,
+      "name": "Mira Parmar",
+      "avatar_color": "#EF9F27",
+      "current_levels": {
+        "Mathematics": 3,
+        "Science": 3,
+        "Language": 4,
+        "Social Studies": 3
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s009",
+      "roll_no": 9,
+      "name": "Dev Gandhi",
+      "avatar_color": "#E85D55",
+      "current_levels": {
+        "Mathematics": 2,
+        "Science": 2,
+        "Language": 2,
+        "Social Studies": 2
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s010",
+      "roll_no": 10,
+      "name": "Kavya Raval",
+      "avatar_color": "#4A3FB7",
+      "current_levels": {
+        "Mathematics": 2,
+        "Science": 2,
+        "Language": 2,
+        "Social Studies": 2
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s011",
+      "roll_no": 11,
+      "name": "Sneha Rao",
+      "avatar_color": "#1D9E75",
+      "current_levels": {
+        "Mathematics": 2,
+        "Science": 3,
+        "Language": 2,
+        "Social Studies": 1
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s012",
+      "roll_no": 12,
+      "name": "Karan Patel",
+      "avatar_color": "#EF9F27",
+      "current_levels": {
+        "Mathematics": 1,
+        "Science": 2,
+        "Language": 3,
+        "Social Studies": 2
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s013",
+      "roll_no": 13,
+      "name": "Ravi Joshi",
+      "avatar_color": "#E85D55",
+      "current_levels": {
+        "Mathematics": 3,
+        "Science": 2,
+        "Language": 1,
+        "Social Studies": 3
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s014",
+      "roll_no": 14,
+      "name": "Neha Desai",
+      "avatar_color": "#4A3FB7",
+      "current_levels": {
+        "Mathematics": 2,
+        "Science": 2,
+        "Language": 2,
+        "Social Studies": 2
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    },
+    {
+      "id": "s015",
+      "roll_no": 15,
+      "name": "Arpan Shah",
+      "avatar_color": "#1D9E75",
+      "current_levels": {
+        "Mathematics": 4,
+        "Science": 3,
+        "Language": 3,
+        "Social Studies": 4
+      },
+      "flagged_concepts": [],
+      "recent_sessions": []
+    }
+  ]
+}

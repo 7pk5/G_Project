@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miko × GSEB Classroom Assessment Prototype</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent-green: #10b981;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3);
+            --hover-shadow: 0 40px 80px -15px rgba(59, 130, 246, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Background Glows */
+        .bg-glow-1 {
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 60%;
+            height: 70%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            bottom: -20%;
+            right: -10%;
+            width: 60%;
+            height: 70%;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(15, 23, 42, 0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge-gseb {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 44px;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+        }
+
+        .demo-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: var(--card-shadow);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .teacher-card::before {
+            background: linear-gradient(90deg, var(--primary) 0%, #60a5fa 100%);
+        }
+
+        .student-card::before {
+            background: linear-gradient(90deg, var(--accent-green) 0%, #34d399 100%);
+        }
+
+        .demo-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--hover-shadow);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .card-header {
+            margin-bottom: 32px;
+        }
+
+        .app-type-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .teacher-card .app-type-badge {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        .student-card .app-type-badge {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .btn-launch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px 24px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .teacher-card .btn-launch {
+            background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.25);
+        }
+
+        .teacher-card .btn-launch:hover {
+            box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
+            transform: scale(1.01);
+        }
+
+        .student-card .btn-launch {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+        }
+
+        .student-card .btn-launch:hover {
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+            transform: scale(1.01);
+        }
+
+        footer {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 10;
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <header>
+        <div class="logo-container">
+            <span class="badge-gseb">GSEB Project</span>
+            <span class="logo-text">Miko AI Classroom</span>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <section class="hero-section">
+            <h1 class="hero-title">Connected Classroom <span>Web Showcase</span></h1>
+            <p class="hero-subtitle">
+                Select a dashboard to open the high-fidelity GSEB prototype. All settings adjusted in the School
+                Dashboard dynamically sync in real-time with the SmartBoard Dashboard!
+            </p>
+        </section>
+
+        <section class="cards-grid">
+            <!-- School Dashboard Card -->
+            <div class="demo-card teacher-card">
+                <div class="card-header">
+                    <span class="app-type-badge">School Setup & Planning</span>
+                    <h2 class="card-title">📊 School Dashboard</h2>
+                    <p class="card-description">
+                        Connected GSEB management console. Integrated with the interactive Assessment Planner tool to
+                        dynamically configure class size, active subjects, and planning buffers, linked in real-time to
+                        the SmartBoard.
+                    </p>
+                </div>
+                <a href="./school_dashboard.html" target="_blank" class="btn-launch">
+                    Launch School Dashboard ➔
+                </a>
+            </div>
+
+            <!-- SmartBoard Dashboard Card -->
+            <div class="demo-card student-card">
+                <div class="card-header">
+                    <span class="app-type-badge">Classroom SmartBoard View</span>
+                    <h2 class="card-title">🖥️ SmartBoard Dashboard</h2>
+                    <p class="card-description">
+                        Interactive oral evaluation board for GSEB students. Automatically syncs and dynamically adjusts
+                        the active student roster list and subject metrics in real-time as configured in the School
+                        Dashboard.
+                    </p>
+                </div>
+                <a href="./student/index.html" target="_blank" class="btn-launch">
+                    Launch SmartBoard Dashboard ➔
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        &copy; 2026 Miko AI & Gujarat State Education Board (GSEB). Original Flutter source code remains 100% intact.
+    </footer>
+</body>
+
+</html>
