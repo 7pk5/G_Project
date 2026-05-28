@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment Planner · Gujarat 2026–27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<!-- Preload Firebase SDK so it's ready before user clicks Confirm -->
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f2;
+  --surface:#ffffff;
+  --border:#e9e7df;
+  --border2:#ccc9be;
+  --ink:#111110;
+  --ink2:#4a4844;
+  --ink3:#7a7670;
+  --ok:#16a34a;--ok-bg:#f0fdf4;--ok-b:#bbf7d0;
+  --warn:#b45309;--warn-bg:#fffbeb;--warn-b:#fde68a;
+  --bad:#dc2626;--bad-bg:#fef2f2;--bad-b:#fecaca;
+  --exam:#9f1239;--exam-bg:#fff1f2;--exam-b:#fecdd3;
+  --c-math:#d97706;--c-sci:#059669;--c-lang:#2563eb;--c-soc:#7c3aed;
+  --cp1:#0284c7;--cp2:#059669;--cp3:#d97706;--cp4:#7c3aed;
+}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* ── NAV ── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;padding:0 32px;gap:14px;position:sticky;top:0;z-index:50}
+.nav-logo{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:19px;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+.nav-pipe{width:1px;height:16px;background:var(--border2)}
+.nav-sub{font-size:12px;color:var(--ink3)}
+.nav-class{margin-left:auto;font-size:13px;font-weight:600;color:var(--ink);background:var(--bg);border:1px solid var(--border2);padding:5px 14px;border-radius:99px;transition:all .2s}
+
+/* ── PAGE ── */
+.page{max-width:960px;margin:0 auto;padding:32px 24px 80px;display:flex;flex-direction:column;gap:0}
+
+/* ── STEP LABEL ── */
+.step-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px;margin-top:32px}
+.step-wrap:first-child{margin-top:0}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-label{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em}
+
+/* ── CONFIGURE ── */
+.config-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 28px}
+.class-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.class-label{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+.class-groups{display:flex;flex-direction:column;gap:10px}
+.class-group-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cg-label{font-size:12px;color:var(--ink3);min-width:80px}
+.cg-btns{display:flex;gap:5px}
+.c-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);font-family:inherit;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.c-btn:hover{border-color:var(--border2);background:var(--border);color:var(--ink)}
+.c-btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.class-info-line{margin-top:14px;padding:10px 14px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--ink2);line-height:1.5;border:1px solid var(--border)}
+.class-info-line b{color:var(--ink);font-weight:600}
+.class-info-line .exam-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--exam-bg);color:var(--exam);border:1px solid var(--exam-b);margin-left:6px;vertical-align:middle}
+
+.controls-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.ctrl-field{display:flex;flex-direction:column;gap:7px}
+.ctrl-label{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em}
+.stp{display:flex;align-items:center;border:1px solid var(--border2);border-radius:8px;height:46px;overflow:hidden;background:var(--bg)}
+.stp-btn{width:44px;height:100%;background:none;border:none;font-size:17px;color:var(--ink2);cursor:pointer;font-family:inherit;transition:background .1s}
+.stp-btn:hover{background:var(--border)}
+.stp-inp{flex:1;text-align:center;font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:var(--ink);background:none;border:none;outline:none}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+.seg{display:flex;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:3px;gap:2px;height:46px}
+.seg-btn{flex:1;border:none;border-radius:6px;font-family:inherit;font-size:12px;font-weight:500;color:var(--ink2);background:none;cursor:pointer;transition:all .15s;white-space:nowrap}
+.seg-btn.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.09)}
+.emb-sub{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.sstp{display:flex;align-items:center;border:1px solid var(--border);border-radius:7px;height:38px;overflow:hidden;background:var(--bg)}
+.sstp-btn{width:34px;height:100%;background:none;border:none;font-size:13px;color:var(--ink2);cursor:pointer;font-family:inherit}
+.sstp-btn:hover{background:var(--border)}
+.sstp-inp{flex:1;text-align:center;font-size:14px;font-weight:500;color:var(--ink);background:none;border:none;outline:none}
+
+/* ── VERDICT ── */
+.verdict{border-radius:16px;padding:24px 28px;border:2px solid;transition:all .3s}
+.verdict.ok{background:var(--ok-bg);border-color:var(--ok-b)}
+.verdict.bad{background:var(--bad-bg);border-color:var(--bad-b)}
+.verdict.warn{background:var(--warn-bg);border-color:var(--warn-b)}
+.v-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.v-dot{width:8px;height:8px;border-radius:50%}
+.ok .v-tag{color:var(--ok)}.ok .v-dot{background:var(--ok)}
+.bad .v-tag{color:var(--bad)}.bad .v-dot{background:var(--bad)}
+.warn .v-tag{color:var(--warn)}.warn .v-dot{background:var(--warn)}
+.v-headline{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:27px;font-weight:400;letter-spacing:-.01em;color:var(--ink);line-height:1.2;margin-bottom:10px}
+.v-body{font-size:14px;color:var(--ink2);line-height:1.7}
+.v-body strong{color:var(--ink);font-weight:600}
+.v-three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.vt{background:rgba(255,255,255,.7);border-radius:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.06)}
+.vt-n{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:28px;font-weight:500;letter-spacing:-.02em;color:var(--ink);line-height:1;margin-bottom:3px}
+.vt-l{font-size:12px;color:var(--ink2)}
+.v-fixes{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.v-fix{padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;border-radius:8px;border:1px solid;cursor:pointer;transition:opacity .15s;background:rgba(255,255,255,.8)}
+.ok .v-fix{color:var(--ok);border-color:var(--ok-b)}
+.bad .v-fix{color:var(--bad);border-color:var(--bad-b)}
+.warn .v-fix{color:var(--warn);border-color:var(--warn-b)}
+
+/* ── SCHEDULE ── */
+.sched-wrap{display:flex;flex-direction:column;gap:10px}
+.subj-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.subj-card.spill{border-color:var(--warn-b);border-width:1.5px}
+.sc-hd{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.sc-hd.spill-hd{background:var(--warn-bg)}
+.sc-name{font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:9px}
+.sc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sc-meta{font-size:12px;color:var(--ink3)}
+.sc-meta.warn{color:var(--warn);font-weight:500}
+.week-block{border-bottom:1px solid var(--border)}
+.week-block:last-child{border-bottom:none}
+.week-block.spill-wk{background:var(--warn-bg)}
+.week-block.exam-wk{background:var(--exam-bg)}
+.day-row{display:grid;gap:0}
+.week-tag{padding:12px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px;background:var(--bg);min-width:96px}
+.week-block.spill-wk .week-tag{background:#fef3c7}
+.week-block.exam-wk .week-tag{background:var(--exam-bg)}
+.wt-label{font-size:12px;font-weight:600;color:var(--ink2)}
+.wt-date{font-size:10px;color:var(--ink3)}
+.wt-label.warn{color:var(--warn)}
+.day-col{padding:10px 8px;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.day-col:last-child{border-right:none}
+.day-col.buf-col{background:var(--bg);opacity:.45}
+.day-col.free-col{background:var(--bg);opacity:.3}
+.day-col.exam-col{background:var(--exam-bg)}
+.dn{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.day-pill{width:100%;border-radius:7px;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.dp-n{font-size:17px;font-weight:600;color:#fff;line-height:1}
+.dp-range{font-size:10px;color:rgba(255,255,255,.85)}
+.dp-min{font-size:9px;color:rgba(255,255,255,.7)}
+.buf-label{font-size:10px;color:var(--ink3);margin-top:4px;text-align:center;line-height:1.3}
+.exam-label-cell{font-size:10px;font-weight:600;color:var(--exam);margin-top:4px;text-align:center;line-height:1.3}
+.sc-footer{padding:11px 18px;display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-top:1px solid var(--border)}
+.sc-footer-detail{font-size:12px;color:var(--ink2)}
+.sc-footer-badge{font-size:12px;font-weight:600;padding:4px 12px;border-radius:99px;background:var(--ok-bg);color:var(--ok)}
+
+/* ── EXTRA TIME PANEL ── */
+.extra-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.extra-panel-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.extra-panel-title{font-size:14px;font-weight:600;color:var(--ink)}
+.extra-panel-sub{font-size:12px;color:var(--ink3)}
+.extra-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.extra-opt{border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .15s;background:var(--bg)}
+.extra-opt:hover{border-color:var(--border2);background:var(--surface)}
+.extra-opt.on{border-color:var(--ok);background:var(--ok-bg)}
+.extra-opt-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.extra-opt-name{font-size:13px;font-weight:600;color:var(--ink)}
+.extra-opt-radio{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.extra-opt.on .extra-opt-radio{background:var(--ok);border-color:var(--ok)}
+.extra-opt-radio-dot{width:6px;height:6px;border-radius:50%;background:white;opacity:0}
+.extra-opt.on .extra-opt-radio-dot{opacity:1}
+.extra-opt-val{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:26px;font-weight:500;letter-spacing:-.02em;color:var(--ink);line-height:1;margin-bottom:2px}
+.extra-opt-desc{font-size:11px;color:var(--ink3);line-height:1.5}
+.extra-opt.on .extra-opt-desc{color:var(--ok)}
+
+/* ── CP SUGGESTION ── */
+.cp-suggest{background:var(--warn-bg);border:1.5px solid var(--warn-b);border-radius:14px;padding:18px 22px}
+.cps-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.cps-icon{font-size:20px;flex-shrink:0}
+.cps-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.cps-body{font-size:13px;color:var(--ink2);line-height:1.6}
+.cps-body strong{color:var(--ink);font-weight:600}
+.cps-options{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.cps-opt{background:rgba(255,255,255,.7);border:1px solid var(--warn-b);border-radius:8px;padding:12px 14px}
+.cps-opt-label{font-size:11px;font-weight:600;color:var(--warn);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.cps-opt-val{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.cps-opt-desc{font-size:11px;color:var(--ink2)}
+.subj-chip-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.subj-chip-label{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-right:4px}
+.subj-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1.5px solid var(--border2);background:var(--bg);cursor:pointer;font-size:12px;font-weight:500;color:var(--ink2);transition:all .15s;user-select:none}
+.subj-chip.on{color:var(--ink)}
+.subj-chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.subj-chip-x{font-size:12px;margin-left:2px;line-height:1}
+.subj-chip-hint{margin-left:auto;font-size:11px;color:var(--warn);font-weight:500}
+
+/* ── CHECKPOINTS ── */
+.cp-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+.cp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.cp-num{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:6px}
+.cp-wk{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:28px;font-weight:500;letter-spacing:-.02em;color:var(--ink);line-height:1;margin-bottom:2px}
+.cp-date-real{font-size:13px;color:var(--ink2);margin-bottom:8px;font-weight:500}
+.cp-level{font-size:12px;color:var(--ink3);margin-bottom:10px;line-height:1.5}
+.cp-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px}
+.s-ok{background:var(--ok-bg);color:var(--ok)}
+.s-warn{background:var(--warn-bg);color:var(--warn)}
+.s-muted{background:var(--bg);color:var(--ink3)}
+
+/* ── YOUR PLAN ── */
+.plan-card{background:var(--ink);border-radius:16px;padding:28px 32px;color:#fff}
+.plan-title{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px;color:#fff}
+.plan-sub{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:22px}
+.plan-lines{display:flex;flex-direction:column;gap:0;border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;margin-bottom:22px}
+.plan-line{display:grid;grid-template-columns:36px 1fr auto;gap:12px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.07);align-items:center}
+.plan-line:last-child{border-bottom:none}
+.pl-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.pl-text{font-size:13px;color:rgba(255,255,255,.85);line-height:1.4}
+.pl-text b{color:#fff;font-weight:600}
+.pl-date{font-size:12px;color:rgba(255,255,255,.45);white-space:nowrap}
+.plan-actions{display:flex;gap:10px}
+.plan-btn{padding:10px 22px;font-size:13px;font-weight:600;font-family:inherit;border-radius:9px;cursor:pointer;transition:all .15s;border:none}
+.plan-btn.primary{background:#fff;color:var(--ink)}
+.plan-btn.primary:hover{background:#f0ede6}
+.plan-btn.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)}
+.plan-btn.ghost:hover{background:rgba(255,255,255,.15)}
+
+/* ── PRINT ── */
+#pv{display:none;position:fixed;inset:0;z-index:200;background:#fff;overflow:auto}
+.pi{max-width:800px;margin:0 auto;padding:52px 52px 80px;font-family:'Inter',-apple-system,sans-serif;color:#111}
+.pclose{position:fixed;top:18px;right:22px;padding:8px 16px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+@media print{body>*:not(#pv){display:none!important}#pv{display:block!important;position:static}.pclose{display:none}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.u{animation:fadeUp .3s ease both}
+.u1{animation-delay:.05s}.u2{animation-delay:.1s}.u3{animation-delay:.15s}.u4{animation-delay:.2s}.u5{animation-delay:.25s}
+
+.plan-btn.confirm{background:rgba(16,185,129,.12);color:#059669;border:1px solid rgba(16,185,129,.3)}
+.plan-btn.confirm:hover{background:rgba(16,185,129,.22)}
+.plan-btn.confirm:disabled{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <span class="nav-logo">Assessment Planner</span>
+  <div class="nav-pipe"></div>
+  <span class="nav-sub">Gujarat GSHSEB 2026–27</span>
+  <span class="nav-class" id="nav-class">Class 5</span>
+</header>
+
+<div class="page">
+
+  <!-- ① CONFIGURE -->
+  <div class="step-wrap u"><div class="step-num">1</div><span class="step-label">Configure your class</span></div>
+  <div class="config-card u u1">
+    <div class="class-section">
+      <div class="class-label">Select class</div>
+      <div class="class-groups">
+        <div class="class-group-row"><span class="cg-label">Primary</span><div class="cg-btns" id="cg-primary"></div></div>
+        <div class="class-group-row"><span class="cg-label">Middle</span><div class="cg-btns" id="cg-middle"></div></div>
+        <div class="class-group-row"><span class="cg-label">Secondary</span><div class="cg-btns" id="cg-secondary"></div></div>
+        <div class="class-group-row"><span class="cg-label">Higher Sec.</span><div class="cg-btns" id="cg-higher"></div></div>
+      </div>
+      <div class="class-info-line" id="class-info-line"></div>
+    </div>
+    <div class="controls-row">
+      <div class="ctrl-field">
+        <span class="ctrl-label">Students</span>
+        <div class="stp">
+          <button class="stp-btn" onclick="adj('stu',-1)">−</button>
+          <input class="stp-inp" type="number" id="stu" value="40" min="5" max="120" oninput="go()">
+          <button class="stp-btn" onclick="adj('stu',1)">+</button>
+        </div>
+      </div>
+      <div class="ctrl-field">
+        <span class="ctrl-label">School week</span>
+        <div class="seg" id="seg-days">
+          <button class="seg-btn on" onclick="setDays(5)">5 days</button>
+          <button class="seg-btn" onclick="setDays(6)">6 days</button>
+        </div>
+      </div>
+      <div class="ctrl-field">
+        <span class="ctrl-label">Delivery</span>
+        <div class="seg" id="seg-mode">
+          <button class="seg-btn on" onclick="setMode('ded')">Dedicated slot</button>
+          <button class="seg-btn" onclick="setMode('emb')">Within lecture</button>
+        </div>
+      </div>
+    </div>
+    <div id="emb-sub" class="emb-sub" style="display:none">
+      <div class="ctrl-field">
+        <span class="ctrl-label">Lectures / week</span>
+        <div class="sstp">
+          <button class="sstp-btn" onclick="adj('lec',-1)">−</button>
+          <input class="sstp-inp" type="number" id="lec" value="4" min="1" max="10" oninput="go()">
+          <button class="sstp-btn" onclick="adj('lec',1)">+</button>
+        </div>
+      </div>
+      <div class="ctrl-field">
+        <span class="ctrl-label">Lecture length (min)</span>
+        <div class="sstp">
+          <button class="sstp-btn" onclick="adj('len',-5)">−</button>
+          <input class="sstp-inp" type="number" id="len" value="45" min="15" max="90" step="5" oninput="go()">
+          <button class="sstp-btn" onclick="adj('len',5)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② VERDICT -->
+  <div class="step-wrap u u1"><div class="step-num">2</div><span class="step-label">Can you reach CP1?</span></div>
+  <div id="verdict" class="verdict ok u u2"></div>
+  <div id="extra-time-panel" style="display:none"></div>
+  <div id="cp-suggest-panel" style="display:none"></div>
+
+  <!-- ③ SCHEDULE -->
+  <div class="step-wrap u u2"><div class="step-num">3</div><span class="step-label">Week-by-week · day-by-day distribution</span></div>
+  <div class="subj-chip-row u u3" id="subj-chips"></div>
+  <div class="sched-wrap u u3" id="sched-wrap"></div>
+
+  <!-- ④ CHECKPOINTS -->
+  <div class="step-wrap u u3"><div class="step-num">4</div><span class="step-label">Annual checkpoints</span></div>
+  <div class="cp-row u u4" id="cp-row"></div>
+
+  <!-- ⑤ YOUR PLAN -->
+  <div class="step-wrap u u4"><div class="step-num">5</div><span class="step-label">Your plan</span></div>
+  <div class="plan-card u u5" id="plan-card"></div>
+
+</div>
+
+<!-- PRINT -->
+<div id="pv"><button class="pclose" onclick="hidePrint()">✕ Close</button><div class="pi" id="pi"></div></div>
+
+<script>
+// ── CLASS DATA ──
+const CD = {
+  1:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'art',n:'Art & Craft',h:'#7c3aed'}],board:false,internal:false},
+  2:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'art',n:'Art & Craft',h:'#7c3aed'}],board:false,internal:false},
+  3:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  4:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  5:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  6:{g:'Middle',   subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  7:{g:'Middle',   subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  8:{g:'Middle',   subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  9:{g:'Secondary',subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:true},
+  10:{g:'Secondary',subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:true,internal:true},
+  11:{g:'Higher Sec.',subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'phy',n:'Physics',h:'#059669'},{id:'chem',n:'Chemistry',h:'#2563eb'},{id:'bio',n:'Biology / CS',h:'#7c3aed'}],board:false,internal:true,note:'Science stream'},
+  12:{g:'Higher Sec.',subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'phy',n:'Physics',h:'#059669'},{id:'chem',n:'Chemistry',h:'#2563eb'},{id:'bio',n:'Biology / CS',h:'#7c3aed'}],board:true,internal:true,note:'Science stream'},
+};
+
+// ── GUJARAT CALENDAR ──
+const GUJ_EXAMS = [
+  {label:'Internal exams',   s:new Date(2026,9,22),  e:new Date(2026,10,2),  cls:[9,10,11,12]},
+  {label:'Internal exams',   s:new Date(2027,0,18),  e:new Date(2027,0,28),  cls:[9,10,11,12]},
+  {label:'Pre-board exams',  s:new Date(2027,1,1),   e:new Date(2027,1,3),   cls:[10,12]},
+  {label:'Science practicals',s:new Date(2027,1,5),  e:new Date(2027,1,13),  cls:[12]},
+  {label:'Board exams',      s:new Date(2027,1,25),  e:new Date(2027,2,17),  cls:[10,12]},
+  {label:'Annual exams',     s:new Date(2027,3,5),   e:new Date(2027,3,20),  cls:[9,11]},
+];
+const GUJ_HOLS = [
+  new Date(2026,10,5),new Date(2026,10,6),new Date(2026,10,7),new Date(2026,10,8),
+  new Date(2026,10,9),new Date(2026,10,10),new Date(2026,10,11),new Date(2026,10,12),
+  new Date(2026,10,13),new Date(2026,10,14),new Date(2026,10,15),new Date(2026,10,16),
+  new Date(2026,10,17),new Date(2026,10,18),new Date(2026,10,19),new Date(2026,10,20),
+  new Date(2026,10,21),new Date(2026,10,22),new Date(2026,10,23),new Date(2026,10,24),new Date(2026,10,25),
+  new Date(2026,7,15),new Date(2026,7,18),new Date(2026,8,2),new Date(2026,9,2),new Date(2026,9,12),
+  new Date(2027,0,14),new Date(2027,0,26),new Date(2027,2,17)
+];
+const TERM_START = new Date(2026,5,8);
+const TERM1_END  = new Date(2026,10,4);
+const TERM2_S    = new Date(2026,10,26);
+const TERM2_E    = new Date(2027,4,2);
+const SUMMER_S   = new Date(2027,4,3);
+const CP1_WKS    = 8;
+const MIN_S = 5, BASE_STU = 40, BASE_MIN = 50, EMB_R = 10/45;
+
+let selClass=5, schoolDays=5, mode='ded';
+let activeSubjs=new Set(['math','sci','lang','soc']);
+let extraTimeMode=null;
+let cpCycleMode=null;
+let cpWindowMode=8; // CP1 target window in weeks: 8, 12, or 16
+
+function adj(id,d){
+  const el=document.getElementById(id);
+  const mn={stu:5,lec:1,len:15},mx={stu:120,lec:10,len:90};
+  el.value=Math.min(mx[id],Math.max(mn[id],+el.value+d));
+  go();
+}
+function setDays(n){
+  schoolDays=n;
+  document.getElementById('seg-days').querySelectorAll('.seg-btn').forEach((b,i)=>b.classList.toggle('on',(i===0&&n===5)||(i===1&&n===6)));
+  go();
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('seg-mode').querySelectorAll('.seg-btn').forEach((b,i)=>b.classList.toggle('on',(i===0&&m==='ded')||(i===1&&m==='emb')));
+  document.getElementById('emb-sub').style.display=m==='emb'?'grid':'none';
+  go();
+}
+function selectClass(c){
+  selClass=c;
+  activeSubjs=new Set(CD[c].subjs.map(s=>s.id));
+  extraTimeMode=null;
+  cpCycleMode=null;
+  cpWindowMode=8;
+  document.querySelectorAll('.c-btn').forEach(b=>b.classList.toggle('on',+b.dataset.cls===c));
+  document.getElementById('nav-class').textContent='Class '+c;
+  go();
+}
+function toggleSubj(id){
+  if(activeSubjs.has(id)){if(activeSubjs.size>1)activeSubjs.delete(id);}
+  else activeSubjs.add(id);
+  go();
+}
+
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function fmt(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}
+function fmtMon(d){return d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'})}
+function embMins(len){return Math.min(len,parseFloat((EMB_R*len).toFixed(1)))}
+function embPerLec(len){return Math.floor(embMins(len)/MIN_S)}
+
+function classExams(cls){return GUJ_EXAMS.filter(e=>e.cls.includes(cls))}
+function isExamWeek(wkStart,cls){
+  const exams=classExams(cls);
+  for(let d=0;d<7;d++){
+    const day=addDays(wkStart,d);
+    if(exams.some(e=>day>=e.s&&day<=e.e))return true;
+  }
+  return false;
+}
+function isHolidayWeek(wkStart){
+  let schoolCount=0;
+  for(let d=0;d<(schoolDays===6?6:5);d++){
+    const day=addDays(wkStart,d);
+    if(day.getDay()===0)continue;
+    if(GUJ_HOLS.some(h=>h.toDateString()===day.toDateString()))continue;
+    if(day>=TERM_START&&(day<=TERM1_END||(day>=TERM2_S&&day<SUMMER_S)))schoolCount++;
+  }
+  return schoolCount<2;
+}
+function isSchoolWeek(wkStart){
+  if(isHolidayWeek(wkStart))return false;
+  if(wkStart>=SUMMER_S)return false;
+  if(wkStart>TERM1_END&&wkStart<TERM2_S)return false;
+  return true;
+}
+
+// Build all school weeks from term start
+function buildWeeks(numWeeks, cls){
+  const result=[];
+  let cur=new Date(TERM_START);
+  while(cur.getDay()!==1)cur=addDays(cur,1);
+  let found=0,attempts=0;
+  while(found<numWeeks&&attempts<120){
+    attempts++;
+    const isSchool=isSchoolWeek(cur);
+    const isExam=isExamWeek(cur,cls);
+    const wk={start:new Date(cur),isExam,isSchool,examLabel:''};
+    if(isExam){
+      const ex=classExams(cls).find(e=>addDays(cur,6)>=e.s&&cur<=e.e);
+      if(ex)wk.examLabel=ex.label.split(' ').slice(0,2).join(' ');
+    }
+    result.push(wk);
+    if(isSchool&&!isExam)found++;
+    cur=addDays(cur,7);
+  }
+  return result;
+}
+
+function go(){
+  const stu=Math.max(5,+document.getElementById('stu').value||40);
+  const lec=+document.getElementById('lec').value||4;
+  const len=+document.getElementById('len').value||45;
+  const cd=CD[selClass];
+  const actDays=schoolDays-1;
+  // Only use active subjects — filter from class subjects
+  const allSubjs=cd.subjs;
+  const subjs=allSubjs.filter(s=>activeSubjs.has(s.id));
+
+  // ── Mode-specific capacity ──
+  const sessionMin   = Math.max(10,Math.round((stu/BASE_STU)*BASE_MIN));
+  const embAssessMin = parseFloat((EMB_R*len).toFixed(1));
+  const embStuPerLec = Math.max(1,Math.floor(embAssessMin/MIN_S));
+  const lecPerDayBase = Math.floor(lec/actDays);
+  const lecPerDayExtra= lec % actDays;
+  const maxLecPerDay  = lecPerDayBase + (lecPerDayExtra>0?1:0);
+  const embPerDayMax  = maxLecPerDay * embStuPerLec;
+  const embWkCap      = lec * embStuPerLec;
+
+  const perDay   = mode==='ded' ? Math.max(1,Math.floor(sessionMin/MIN_S)) : embPerDayMax;
+  const wkCap    = mode==='ded' ? perDay*actDays : embWkCap;
+
+  // Base totals (all active subjects, base session)
+  const wps = wkCap>0 ? Math.ceil(stu/wkCap) : 99;
+  const totalWks = wps * subjs.length;
+  const fits = totalWks <= cpWindowMode;
+  const slack = cpWindowMode - totalWks;
+
+  // ── Apply Feature 2 toggle ──
+  if(fits && cpCycleMode && !extraTimeMode) cpCycleMode = null; // only auto-reset if not deliberately set
+  const cycleSubjs = cpCycleMode
+    ? subjs.slice(0, cpCycleMode)
+    : subjs;
+  const nextCycleSubjs = cpCycleMode
+    ? subjs.slice(cpCycleMode)
+    : [];
+
+  // ── Apply Feature 1 toggle: extraTimeMode adjusts displayed session min ──
+  const slackSessions = slack * wkCap;
+  const extraMinPerStu = mode==='ded'
+    ? Math.floor((slack * actDays * sessionMin) / Math.max(1,stu))
+    : Math.floor((slack * embWkCap * embAssessMin) / Math.max(1,stu));
+  const effectiveSessionMin = extraTimeMode==='mins'
+    ? (mode==='ded' ? sessionMin + extraMinPerStu : embAssessMin + extraMinPerStu)
+    : (mode==='ded' ? sessionMin : embAssessMin);
+  const canDoTwice = fits && slack >= totalWks && cpWindowMode >= totalWks*2;
+
+  // Build calendar weeks based on effective subject count
+  const calWksNeeded = (cpCycleMode ? wps*cpCycleMode : totalWks) + (extraTimeMode==='twice'&&canDoTwice ? totalWks : 0) + 8;
+  const calWks = buildWeeks(calWksNeeded, selClass);
+
+  // Assign weeks to cycle subjects
+  let wkIdx=0;
+  const subjWks = cycleSubjs.map(s=>{
+    const assigned=[];
+    let w=0;
+    while(w<wps&&wkIdx<calWks.length){
+      const wk=calWks[wkIdx];wkIdx++;
+      if(wk.isSchool&&!wk.isExam){assigned.push(wk);w++;}
+    }
+    return{...s,weeks:assigned};
+  });
+
+  // If twice mode: build second round
+  const subjWks2 = (extraTimeMode==='twice'&&canDoTwice) ? cycleSubjs.map(s=>{
+    const assigned=[];
+    let w=0;
+    while(w<wps&&wkIdx<calWks.length){
+      const wk=calWks[wkIdx];wkIdx++;
+      if(wk.isSchool&&!wk.isExam){assigned.push(wk);w++;}
+    }
+    return{...s,weeks:assigned};
+  }) : [];
+
+  // ── SUBJECT CHIPS ──
+  const canRemove=subjs.length>1;
+  const fewWks=wps*(subjs.length-1);
+  const hint=!fits&&subjs.length>1?`Remove 1 subject → ${fewWks} wks${fewWks<=CP1_WKS?' ✓ fits CP1':''}`:fits&&subjs.length<allSubjs.length?'All subjects fit — add more?':'';
+  document.getElementById('subj-chips').innerHTML=`
+    <span class="subj-chip-label">Subjects</span>
+    ${allSubjs.map(s=>{
+      const on=activeSubjs.has(s.id);
+      return `<div class="subj-chip${on?' on':''}" onclick="toggleSubj('${s.id}')" style="${on?`border-color:${s.h}`:''}">
+        <span class="subj-chip-dot" style="background:${on?s.h:'var(--border2)'}"></span>
+        ${s.n}
+        ${on&&canRemove?`<span class="subj-chip-x" style="color:${s.h}">×</span>`:!on?`<span style="font-size:11px;color:var(--ink3)">+ add</span>`:''}
+      </div>`;
+    }).join('')}
+    ${hint?`<span class="subj-chip-hint">${hint}</span>`:''}
+  `;
+
+  // CP1 deadline = end of CP1_WKS-th available school week
+  let avail=0,cp1Date=null;
+  for(const wk of calWks){
+    if(wk.isSchool&&!wk.isExam){avail++;if(avail===CP1_WKS){cp1Date=addDays(wk.start,actDays-1);break;}}
+  }
+
+  // ── CLASS INFO LINE ──
+  const exams=classExams(selClass);
+  const examTags=exams.length>0?exams.map(e=>`<span class="exam-tag">🚫 ${e.label}: ${fmt(e.s)}–${fmt(e.e)}</span>`).join(''):'';
+  document.getElementById('class-info-line').innerHTML=`<b>Class ${selClass}</b> · ${cd.g} · 4 subjects: <b>${cd.subjs.map(s=>s.n).join(', ')}</b>${cd.note?` · ${cd.note}`:''}${examTags?'<br>Exam blackouts (auto-skipped): '+examTags:''}`;
+
+  // ── VERDICT ──
+  const vel=document.getElementById('verdict');
+  vel.className=`verdict ${fits?(slack>=2?'ok':'ok'):'bad'} u u2`;
+  const firstDate=subjWks[0]?.weeks[0]?.start;
+  const cp1Str=cp1Date?fmt(cp1Date):'Week '+CP1_WKS;
+  let vfixes='';
+  if(!fits){
+    const dbl=Math.ceil(stu/(wkCap*2))*4;
+    vfixes=`<button class="v-fix" onclick="alert('Run 2 sessions per day to double capacity.')">2 sessions/day → ${dbl} wks${dbl<=8?' ✓':''}</button>`;
+    if(schoolDays===5)vfixes+=`<button class="v-fix" onclick="setDays(6)">Switch to 6-day week</button>`;
+  }
+  const modeDesc = mode==='ded'
+    ? `${sessionMin}-min dedicated session · ${perDay} students/day`
+    : `${len}-min lecture → ${embAssessMin} min assessment (${Math.round(embAssessMin/len*100)}%) · ${embStuPerLec} students/lecture · ${lec} lectures/week = ${embWkCap} students/week`;
+
+  vel.innerHTML=fits
+    ?`<div class="v-tag"><div class="v-dot"></div>CP1 achievable${slack>0?' — '+slack+' week'+(slack>1?'s':'')+' of slack':' — right on schedule'}</div>
+       <div class="v-headline">All ${stu} students · ${subjs.length} subject${subjs.length>1?'s':''} · covered by ${cp1Str}.</div>
+       <div class="v-body">${modeDesc} · ${wps} week${wps>1?'s':''} per subject.${firstDate?' Starting <strong>'+fmt(firstDate)+'</strong>.':''} Exam periods automatically skipped.</div>
+       <div class="v-three">
+         <div class="vt"><div class="vt-n">${mode==='ded'?sessionMin:embWkCap}<span style="font-size:14px;color:var(--ink3)">${mode==='ded'?' min':' /wk'}</span></div><div class="vt-l">${mode==='ded'?'Session length':'Students/week'}</div></div>
+         <div class="vt"><div class="vt-n">${mode==='ded'?perDay:embStuPerLec}<span style="font-size:14px;color:var(--ink3)">${mode==='ded'?' /day':' /lecture'}</span></div><div class="vt-l">${mode==='ded'?'Students per day':'Students per lecture'}</div></div>
+         <div class="vt"><div class="vt-n">${totalWks}<span style="font-size:14px;color:var(--ink3)"> wks</span></div><div class="vt-l">Total weeks needed</div></div>
+       </div>`
+    :`<div class="v-tag"><div class="v-dot"></div>CP1 at risk — ${totalWks-CP1_WKS} week${totalWks-CP1_WKS>1?'s':''} over the limit</div>
+       <div class="v-headline">${totalWks} weeks needed. CP1 closes at ${cp1Str}.</div>
+       <div class="v-body">${modeDesc} · ${wps} week${wps>1?'s':''}/subject × 4 = ${totalWks} weeks.</div>
+       <div class="v-three">
+         <div class="vt"><div class="vt-n">${mode==='ded'?sessionMin:embWkCap}<span style="font-size:14px;color:var(--ink3)">${mode==='ded'?' min':' /wk'}</span></div><div class="vt-l">${mode==='ded'?'Session length':'Students/week'}</div></div>
+         <div class="vt"><div class="vt-n">${mode==='ded'?perDay:embStuPerLec}<span style="font-size:14px;color:var(--ink3)">${mode==='ded'?' /day':' /lecture'}</span></div><div class="vt-l">${mode==='ded'?'Students per day':'Students per lecture'}</div></div>
+         <div class="vt"><div class="vt-n" style="color:var(--bad)">${totalWks}<span style="font-size:14px"> wks</span></div><div class="vt-l">Need — limit is 8</div></div>
+       </div>
+       <div class="v-fixes">${vfixes}</div>`;
+
+  // ── FEATURE 1: EXTRA TIME PANEL (only when slack > 0) ──
+  const etPanel = document.getElementById('extra-time-panel');
+  if(fits && slack > 0) {
+    // How much extra can we give per student?
+    const slackSessions = slack * wkCap; // extra student-slots available
+    const extraMinPerStu = mode==='ded'
+      ? Math.floor((slack * actDays * sessionMin) / stu)  // spread slack days over all students
+      : Math.floor((slack * embWkCap * embAssessMin) / stu);
+    const extraMinTotal = mode==='ded' ? sessionMin + extraMinPerStu : embAssessMin + extraMinPerStu;
+    // Option B: assessed twice — only viable if slack >= wps (can fit a full second round)
+    const canDoTwice = slack >= totalWks;
+    const twiceNote = canDoTwice
+      ? `${slack} slack weeks ≥ ${totalWks} weeks needed — fits a full second round before CP1`
+      : `${slack} slack week${slack>1?'s':''} available — not enough for a full second round (needs ${totalWks})`;
+
+    etPanel.style.display = 'block';
+    etPanel.className = 'extra-panel';
+    etPanel.innerHTML = `
+      <div class="extra-panel-hd">
+        <div>
+          <div class="extra-panel-title">You have ${slack} spare week${slack>1?'s':''} before CP1 — use them?</div>
+          <div class="extra-panel-sub">Assessment ends at week ${totalWks}. CP1 is week 8. ${slack} week${slack>1?'s':''} of slack available.</div>
+        </div>
+        ${extraTimeMode?`<button onclick="extraTimeMode=null;go()" style="padding:6px 12px;font-size:11px;font-weight:600;font-family:inherit;background:var(--bg);border:1px solid var(--border2);border-radius:6px;cursor:pointer;color:var(--ink3)">Clear</button>`:''}
+      </div>
+      <div class="extra-options">
+        <div class="extra-opt${extraTimeMode==='mins'?' on':''}" onclick="extraTimeMode='mins';go()">
+          <div class="extra-opt-top">
+            <span class="extra-opt-name">More time per student</span>
+            <div class="extra-opt-radio"><div class="extra-opt-radio-dot"></div></div>
+          </div>
+          <div class="extra-opt-val">${extraMinTotal}<span style="font-size:14px;color:var(--ink3)"> min</span></div>
+          <div class="extra-opt-desc">Up from ${mode==='ded'?sessionMin:embAssessMin} min. Spread ${slack} slack week${slack>1?'s':''} across all ${stu} students — each gets ~${extraMinPerStu} extra minutes of AI interaction.</div>
+        </div>
+        <div class="extra-opt${extraTimeMode==='twice'?' on':''}" style="${!canDoTwice?'opacity:.5;cursor:not-allowed':''}" onclick="${canDoTwice?`extraTimeMode='twice';go()`:''}">
+          <div class="extra-opt-top">
+            <span class="extra-opt-name">Assess students twice</span>
+            <div class="extra-opt-radio"><div class="extra-opt-radio-dot"></div></div>
+          </div>
+          <div class="extra-opt-val">${canDoTwice?'2×':'Not enough'}</div>
+          <div class="extra-opt-desc">${twiceNote}.</div>
+        </div>
+      </div>
+      ${extraTimeMode==='mins'?`<div style="padding:10px 14px;background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:8px;font-size:12px;color:var(--ok)">
+        Each student now gets <strong>${extraMinTotal} minutes</strong> of AI assessment time per subject — up from ${mode==='ded'?sessionMin:embAssessMin} min. Schedule unchanged, sessions run longer.
+      </div>`:''}
+      ${extraTimeMode==='twice'&&canDoTwice?`<div style="padding:10px 14px;background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:8px;font-size:12px;color:var(--ok)">
+        Full cycle runs twice before CP1. Weeks 1–${totalWks}: first round. Weeks ${totalWks+1}–${totalWks*2}: second round. Each child assessed in all ${subjs.length} subjects twice.
+      </div>`:''}`;
+  } else {
+    etPanel.style.display = 'none';
+    if(!fits) extraTimeMode = null; // reset if no longer feasible
+  }
+
+  // ── FEATURE 2: CP CYCLE + WINDOW TOGGLE — always shown ──
+  const cpSugPanel = document.getElementById('cp-suggest-panel');
+  cpSugPanel.style.display = 'block';
+  cpSugPanel.className = 'cp-suggest';
+
+  // For each combination of (cpWindow, numSubjects), compute weeks and feasibility
+  const CP_WINDOWS = [8, 12, 16];
+  const subjectOptions = [1, 2, 3, 4].filter(n => n <= subjs.length);
+
+  // Context headline
+  let cpSugTitle, cpSugBody;
+  const isEmbedded = mode === 'emb';
+  if(!fits){
+    cpSugTitle = isEmbedded
+      ? `Within-lecture mode is limited — adjust subjects or extend the CP window`
+      : `CP1 at risk — reduce subjects per cycle to fit`;
+    cpSugBody = isEmbedded
+      ? `${lec} lectures/week × ${embStuPerLec} students/lecture = ${embWkCap} students/week. For ${stu} students: ${wps} wk/subject × ${subjs.length} subjects = <strong>${totalWks} weeks</strong>. Current CP1 window is ${cpWindowMode} weeks. Adjust subjects per cycle, the CP window, or both below.`
+      : `${subjs.length} subjects × ${wps} wk = ${totalWks} wks needed. CP1 window is ${cpWindowMode} weeks. Select fewer subjects this cycle, extend the CP window, or combine both.`;
+  } else if(slack >= 3 && isEmbedded){
+    cpSugTitle = `Within-lecture capacity — you have ${slack} spare weeks`;
+    cpSugBody = `${embWkCap} students/week capacity. ${totalWks} wks needed for ${subjs.length} subjects — fits CP1 with ${slack} wks slack. You can also extend the CP window for more depth per subject.`;
+  } else {
+    cpSugTitle = `Checkpoint cycle options`;
+    cpSugBody = `Choose how many subjects per cycle and when CP1 falls. ${isEmbedded?`Embedded mode capacity: ${embWkCap} students/week (${lec} lec × ${embStuPerLec}/lec).`:''}`;
+  }
+
+  // Build combination matrix — find best fits
+  // For each subject count, what's the minimum CP window that fits?
+  const combos = subjectOptions.map(n => {
+    const wksNeeded = wps * n;
+    const minWindow = CP_WINDOWS.find(w => wksNeeded <= w) || null;
+    const isCurrentlyActive = (cpCycleMode===n || (n===subjs.length&&!cpCycleMode)) && cpWindowMode===(minWindow||cpWindowMode);
+    return { n, wksNeeded, minWindow, fits8: wksNeeded<=8, fits12: wksNeeded<=12, fits16: wksNeeded<=16 };
+  });
+
+  // Remove to fit hint
+  const removeToFit = !fits ? Math.max(0, subjs.length - Math.floor(cpWindowMode / wps)) : 0;
+  const removeHint = removeToFit > 0
+    ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(255,255,255,.6);border-radius:6px;font-size:11px;color:var(--ink2)">Also: remove <strong>${removeToFit} subject${removeToFit>1?'s':''}</strong> from chips above → ${wps*(subjs.length-removeToFit)} weeks${wps*(subjs.length-removeToFit)<=cpWindowMode?' ✓':''}.</div>` : '';
+
+  // Active state helpers
+  const activeSubs = cpCycleMode || subjs.length;
+  const activeWin = cpWindowMode;
+
+  cpSugPanel.innerHTML = `
+    <div class="cps-top">
+      <span class="cps-icon">${fits?'💡':'⚠️'}</span>
+      <div style="flex:1">
+        <div class="cps-title">${cpSugTitle}</div>
+        <div class="cps-body">${cpSugBody}</div>
+      </div>
+      ${(cpCycleMode||cpWindowMode!==8)?`<button onclick="cpCycleMode=null;cpWindowMode=8;go()" style="padding:6px 12px;font-size:11px;font-weight:600;font-family:inherit;background:var(--surface);border:1px solid var(--border2);border-radius:6px;cursor:pointer;color:var(--ink3);white-space:nowrap;flex-shrink:0;margin-left:8px">Reset</button>`:''}
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:2px">
+
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Subjects per cycle</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${subjectOptions.map(n=>{
+            const wksN = wps * n;
+            const fitsWindow = wksN <= cpWindowMode;
+            const isActive = (cpCycleMode===n) || (n===subjs.length && !cpCycleMode);
+            return `<div onclick="cpCycleMode=${n===subjs.length?null:n};go()" style="flex:1;min-width:100px;padding:10px 12px;border-radius:8px;border:1.5px solid ${isActive?'var(--ok)':fitsWindow?'var(--border)':'var(--bad-b)'};background:${isActive?'var(--ok-bg)':fitsWindow?'var(--surface)':'var(--bad-bg)'};cursor:pointer;transition:all .15s">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+                <span style="font-size:12px;font-weight:600;color:var(--ink)">${n} subject${n>1?'s':''}</span>
+                ${isActive?`<span style="color:var(--ok);font-size:13px">✓</span>`:''}
+              </div>
+              <div style="font-size:16px;font-weight:600;color:${fitsWindow?'var(--ok)':'var(--bad)'};line-height:1;margin-bottom:2px">${wksN} wks ${fitsWindow?'✓':'⚠'}</div>
+              <div style="font-size:10px;color:var(--ink3)">${fitsWindow?`${cpWindowMode-wksN} wk slack`:isEmbedded?`${wksN-cpWindowMode} wk over — extend window below`:''}</div>
+              ${n < subjs.length ? `<div style="font-size:10px;color:var(--ink3);margin-top:3px">${subjs.slice(n).map(s=>s.n).join(', ')} → next</div>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">CP1 window — when must all subjects be done?</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${CP_WINDOWS.map(w=>{
+            const wksForCycle = wps * (cpCycleMode || subjs.length);
+            const fitsW = wksForCycle <= w;
+            const isActive = cpWindowMode === w;
+            const label = w===8?'Week 8\n(standard)':w===12?'Week 12\n(extended)':'Week 16\n(flexible)';
+            const cpLabel = w===8?'CP1 standard':w===12?'CP1 extended':w===16?'2 CPs/year':'';
+            return `<div onclick="cpWindowMode=${w};go()" style="flex:1;min-width:100px;padding:10px 12px;border-radius:8px;border:1.5px solid ${isActive?'#0284c7':fitsW?'var(--border)':'var(--bad-b)'};background:${isActive?'#eff6ff':fitsW?'var(--surface)':'var(--bad-bg)'};cursor:pointer;transition:all .15s">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+                <span style="font-size:12px;font-weight:600;color:var(--ink)">Week ${w}</span>
+                ${isActive?`<span style="color:#0284c7;font-size:13px">✓</span>`:''}
+              </div>
+              <div style="font-size:11px;font-weight:500;color:${fitsW?'var(--ok)':'var(--bad)'};margin-bottom:2px">${fitsW?'Fits ✓':'Over ⚠'}</div>
+              <div style="font-size:10px;color:var(--ink3)">${cpLabel}${fitsW&&!isActive?` · saves ${w-(cpCycleMode?wps*cpCycleMode:totalWks)} wk`:''}${w===16?' — half-yearly checkpoints':''}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      ${(cpCycleMode||cpWindowMode!==8)?`<div style="padding:10px 14px;background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:8px;font-size:12px;color:var(--ok)">
+        <strong>Applied:</strong>
+        ${cpCycleMode?` ${cpCycleMode} subjects this cycle (${cycleSubjs.map(s=>s.n).join(', ')})${nextCycleSubjs.length?` → next cycle: ${nextCycleSubjs.map(s=>s.n).join(', ')}`:''}. `:'All subjects. '}
+        CP1 target: <strong>Week ${cpWindowMode}</strong>${cpWindowMode===8?' (standard)':cpWindowMode===12?' (extended)':' (flexible — 2 CPs/year)'}.
+        ${wps*(cpCycleMode||subjs.length)<=cpWindowMode?`✓ Fits with ${cpWindowMode-wps*(cpCycleMode||subjs.length)} wk slack.`:'⚠ Still over — try reducing subjects further.'}
+      </div>`:''}
+    </div>
+    ${removeHint}`;
+  const DNAMES_SHORT=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const schedWrap=document.getElementById('sched-wrap');
+
+  function renderSubjBlock(swks, roundLabel){
+    return swks.map(s=>{
+      const spill=s.weeks.length>1;
+      let weekBlocks='';
+      s.weeks.forEach((wk,wi)=>{
+        const isCont=wi>0;
+        let stuStart=wi*wkCap;
+        let dayCols='';
+        for(let d=0;d<schoolDays;d++){
+          const isBuf=d===actDays;
+          if(isBuf){dayCols+=`<div class="day-col buf-col"><span class="dn">${DNAMES_SHORT[d]}</span><span class="buf-label">Buffer</span></div>`;continue;}
+          if(mode==='ded'){
+            const n=Math.min(perDay,Math.max(0,stu-stuStart));
+            if(n>0){
+              const from=stuStart+1,to=stuStart+n;stuStart+=n;
+              dayCols+=`<div class="day-col"><span class="dn">${DNAMES_SHORT[d]}</span>
+                <div class="day-pill" style="background:${s.h}"><span class="dp-n">${n}</span><span class="dp-range">${from}–${to}</span><span class="dp-min">${effectiveSessionMin} min</span></div></div>`;
+            } else {
+              dayCols+=`<div class="day-col free-col"><span class="dn">${DNAMES_SHORT[d]}</span><span class="buf-label">Free</span></div>`;
+            }
+          } else {
+            const dayLec=lecPerDayBase+(d<lecPerDayExtra?1:0);
+            const n=Math.min(dayLec*embStuPerLec,Math.max(0,stu-stuStart));
+            if(n>0&&dayLec>0){
+              const from=stuStart+1,to=stuStart+n;stuStart+=n;
+              let slots='';let slotStu=from;
+              for(let l=0;l<dayLec;l++){
+                const sn=Math.min(embStuPerLec,to-slotStu+1);if(sn<=0)break;
+                slots+=`<div style="width:100%;border-radius:5px;padding:3px 4px;background:${s.h};opacity:${1-l*0.12};text-align:center;margin-bottom:2px">
+                  <div style="font-size:10px;font-weight:600;color:#fff;line-height:1">${sn} stu</div>
+                  <div style="font-size:9px;color:rgba(255,255,255,.8)">${slotStu}–${slotStu+sn-1}</div>
+                  <div style="font-size:8px;color:rgba(255,255,255,.65)">${effectiveSessionMin} min</div></div>`;
+                slotStu+=sn;
+              }
+              dayCols+=`<div class="day-col" style="padding:6px 5px;gap:2px"><span class="dn">${DNAMES_SHORT[d]}</span>${slots}<span style="font-size:9px;color:var(--ink3);margin-top:1px">${dayLec} lec</span></div>`;
+            } else {
+              dayCols+=`<div class="day-col free-col"><span class="dn">${DNAMES_SHORT[d]}</span><span class="buf-label">${dayLec===0?'No lec':'Free'}</span></div>`;
+            }
+          }
+        }
+        const mo=wk.start.toLocaleDateString('en-GB',{month:'short'});
+        const wkLabel=`${mo} · Wk ${Math.ceil(wk.start.getDate()/7)}`;
+        weekBlocks+=`<div class="week-block${isCont?' spill-wk':''}">
+          <div class="day-row" style="grid-template-columns:96px repeat(${schoolDays},1fr)">
+            <div class="week-tag"><span class="wt-label${isCont?' warn':''}">${wkLabel}</span><span class="wt-date">${fmt(wk.start)}</span>${mode==='emb'?`<span class="wt-date">${lec} lec · ${embStuPerLec}/lec</span>`:''}</div>
+            ${dayCols}
+          </div></div>`;
+      });
+      const totalCovered=Math.min(wkCap*s.weeks.length,stu);
+      const dateRange=s.weeks.length>0?`${fmt(s.weeks[0].start)} – ${fmt(addDays(s.weeks[s.weeks.length-1].start,actDays-1))}`:'-';
+      const footerDetail=mode==='ded'
+        ?`${totalCovered} students · ${s.weeks.length*actDays} active days · ${effectiveSessionMin} min/session`
+        :`${totalCovered} students · ${lec} lec/wk · ${effectiveSessionMin} min/lec · ${embStuPerLec}/lec`;
+      return `<div class="subj-card${spill?' spill':''}">
+        <div class="sc-hd${spill?' spill-hd':''}">
+          <span class="sc-name"><span class="sc-dot" style="background:${s.h}"></span>${s.n}
+            ${roundLabel?`<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;background:${s.h}22;color:${s.h};border:1px solid ${s.h}44;margin-left:4px">${roundLabel}</span>`:''}
+          </span>
+          <span class="sc-meta${spill?' warn':''}">${spill?`Spans ${s.weeks.length} weeks · `:``}${dateRange}</span>
+        </div>
+        <div>${weekBlocks}</div>
+        <div class="sc-footer"><span class="sc-footer-detail">${footerDetail}</span><span class="sc-footer-badge">✓ ${totalCovered}/${stu}</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  let schedHTML=renderSubjBlock(subjWks, extraTimeMode==='twice'?'Round 1':'');
+
+  if(extraTimeMode==='twice'&&canDoTwice&&subjWks2.length>0){
+    schedHTML+=`<div style="padding:10px 16px;background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:10px;font-size:12px;font-weight:600;color:var(--ok)">Round 2 — every student assessed again before CP1</div>`;
+    schedHTML+=renderSubjBlock(subjWks2,'Round 2');
+  }
+
+  if(nextCycleSubjs.length>0){
+    schedHTML+=`<div style="padding:10px 16px;background:var(--warn-bg);border:1px solid var(--warn-b);border-radius:10px;font-size:12px;font-weight:600;color:var(--warn)">Next cycle — ${nextCycleSubjs.map(s=>s.n).join(', ')} — assessed after CP1</div>`;
+    schedHTML+=nextCycleSubjs.map(s=>`<div class="subj-card" style="opacity:.45;pointer-events:none">
+      <div class="sc-hd"><span class="sc-name"><span class="sc-dot" style="background:${s.h}"></span>${s.n}<span style="font-size:11px;color:var(--warn);margin-left:6px;font-weight:400">Next cycle</span></span></div>
+      <div style="padding:14px 18px;font-size:12px;color:var(--ink3)">Scheduled in the next 8-week cycle after CP1.</div>
+    </div>`).join('');
+  }
+
+  schedWrap.innerHTML=schedHTML;
+
+  // ── CHECKPOINTS ──
+  const cpDefs=[
+    {n:'CP1',lv:'L1 — Foundational',desc:'Every child assessed across all subjects at least once.',wk:8,h:'#0284c7'},
+    {n:'CP2',lv:'L2 — Elementary',desc:'Progress tracked. Children behind L2 identified.',wk:16,h:'#059669'},
+    {n:'CP3',lv:'L3 — Developing',desc:'Mid-year movement. Focus areas flagged.',wk:24,h:'#d97706'},
+    {n:'CP4',lv:'L4 — Advanced',desc:'Year-end snapshot. Gaps carried to next year.',wk:32,h:'#7c3aed'},
+  ];
+  const effectiveWks=cpCycleMode?wps*cpCycleMode:totalWks;
+  const effectiveFits=effectiveWks<=cpWindowMode;
+  document.getElementById('cp-row').innerHTML=cpDefs.map((cp,i)=>{
+    const cpFits=i===0?effectiveFits:true;
+    const badgeCls=i===0?(cpFits?'s-ok':'s-warn'):'s-muted';
+    const badgeTxt=i===0?(cpFits?(cpWindowMode-effectiveWks)+'wk slack':'over'):'follows CP1';
+    const wkTarget=i===0?cpWindowMode:cp.wk;
+    return `<div class="cp-card" style="border-top-color:${cp.h}">
+      <style>.cp-card:nth-child(${i+1})::before{background:${cp.h}}</style>
+      <div class="cp-num">${cp.n} · Week ${wkTarget}${i===0&&cpWindowMode!==8?' (adjusted)':''}</div>
+      <div class="cp-wk">${effectiveWks} wks</div>
+      <div class="cp-date-real">${i===0?cp1Str:'~Week '+wkTarget}</div>
+      <div class="cp-level">${cp.lv}<br><span style="font-size:11px;opacity:.7">${cp.desc}</span></div>
+      <span class="cp-status ${badgeCls}">${badgeTxt}</span>
+    </div>`;
+  }).join('');
+
+  // ── YOUR PLAN ──
+  const totalHrs=parseFloat(((stu*subjs.length*MIN_S)/60).toFixed(1));
+  const extraNote=extraTimeMode==='mins'?`Each student gets <b>${effectiveSessionMin} min</b> — extended from ${mode==='ded'?sessionMin:Math.round(embAssessMin)} min`:
+    extraTimeMode==='twice'&&canDoTwice?`Students assessed <b>twice</b> before CP1 — full second round in schedule`:'';
+  const cycleNote=cpCycleMode?`Cycle reduced to <b>${cpCycleMode} subjects</b> — ${nextCycleSubjs.map(s=>s.n).join(', ')} move to next cycle`:'';
+  const planLines=[
+    {icon:'📚',text:`<b>${stu} students</b> · <b>${cycleSubjs.length} subject${cycleSubjs.length>1?'s':''}</b> this cycle · ${effectiveSessionMin} min/session · ${perDay} students/day`,date:firstDate?'Starts '+fmt(firstDate):''},
+    {icon:'📅',text:`<b>${effectiveWks} weeks</b> total · ${wps} week${wps>1?'s':''}/subject · 1 buffer day every week`,date:''},
+    {icon:'⏱',text:`<b>${totalHrs} hrs</b> of AI assessment time this cycle`,date:''},
+    {icon:'🎯',text:`<b>CP1 deadline</b> — ${cycleSubjs.map(s=>s.n).join(', ')} complete before this date`,date:cp1Str},
+    {icon:'🚫',text:`Exam blackouts auto-applied — <b>${classExams(selClass).length} period${classExams(selClass).length!==1?'s':''}</b> excluded`,date:''},
+    ...(extraNote?[{icon:'✨',text:extraNote,date:''}]:[]),
+    ...(cycleNote?[{icon:'🔄',text:cycleNote,date:''}]:[]),
+  ].map(l=>`<div class="plan-line">
+    <div class="pl-icon" style="background:rgba(255,255,255,.1)">${l.icon}</div>
+    <div class="pl-text">${l.text}</div>
+    <div class="pl-date">${l.date}</div>
+  </div>`).join('');
+
+  document.getElementById('plan-card').innerHTML=`
+    <div class="plan-title">Class ${selClass} · ${cd.g} · 2026–27</div>
+    <div class="plan-sub">${(cpCycleMode?effectiveWks<=CP1_WKS:fits)?'CP1 achievable. Hand this plan to your coordinator.':'Adjust the schedule — see suggestions above.'}</div>
+    <div class="plan-lines">${planLines}</div>
+    <div class="plan-actions">
+      <button class="plan-btn primary" onclick="doPrint()">Download plan</button>
+      <button class="plan-btn ghost" onclick="copyPlan()">Copy summary</button>
+      <button class="plan-btn confirm" id="confirm-btn" onclick="window.confirmPlan()">✓ Confirm Plan</button>
+    </div>
+    <div id="confirm-status"></div>`;
+
+  window._currentPlan = {
+    selClass, schoolDays, mode, stu,
+    subjWks, cp1Date, totalWks, fits,
+    subjs, cpWindowMode
+  };
+}
+
+// ── INIT CLASS BUTTONS ──
+(function(){
+  const groups={Primary:[1,2,3,4,5],Middle:[6,7,8],Secondary:[9,10],'Higher Sec.':[11,12]};
+  const ids={Primary:'cg-primary',Middle:'cg-middle',Secondary:'cg-secondary','Higher Sec.':'cg-higher'};
+  Object.entries(groups).forEach(([g,cls])=>{
+    document.getElementById(ids[g]).innerHTML=cls.map(c=>`<button class="c-btn${c===selClass?' on':''}" data-cls="${c}" onclick="selectClass(${c})">${c}</button>`).join('');
+  });
+  activeSubjs=new Set(CD[selClass].subjs.map(s=>s.id));
+})();
+
+function copyPlan(){
+  const stu=+document.getElementById('stu').value||40;
+  const cd=CD[selClass];
+  const sessionMin=Math.max(10,Math.round((stu/BASE_STU)*BASE_MIN));
+  const actDays=schoolDays-1;
+  const perDay=mode==='ded'?Math.max(1,Math.floor(sessionMin/MIN_S)):4*embPerLec(+document.getElementById('len').value||45);
+  const wkCap=perDay*actDays;
+  const wps=wkCap>0?Math.ceil(stu/wkCap):99;
+  const totalWks=wps*4;
+  const txt=`Assessment Plan — Class ${selClass} (${cd.g}) · Gujarat 2026–27\n${stu} students · ${sessionMin}-min session · ${perDay} students/day\n${wps} week/subject × 4 subjects = ${totalWks} weeks\nSubjects: ${cd.subjs.map(s=>s.n).join(', ')}\nCP1 target: Week 8`;
+  navigator.clipboard?.writeText(txt).then(()=>alert('Plan copied to clipboard.'));
+}
+
+// ── PRINT ──
+function doPrint(){
+  const stu=+document.getElementById('stu').value||40;
+  const cd=CD[selClass];
+  const sessionMin=Math.max(10,Math.round((stu/BASE_STU)*BASE_MIN));
+  const actDays=schoolDays-1;
+  const lec=+document.getElementById('lec').value||4;
+  const len=+document.getElementById('len').value||45;
+  const perDay=mode==='ded'?Math.max(1,Math.floor(sessionMin/MIN_S)):lec*embPerLec(len);
+  const wkCap=perDay*actDays;
+  const wps=wkCap>0?Math.ceil(stu/wkCap):99;
+  const totalWks=wps*4;
+  const fits=totalWks<=8;
+  const totalHrs=parseFloat(((stu*4*5)/60).toFixed(1));
+  const mLabel=mode==='ded'?`Dedicated ${sessionMin}-min slot`:`Within lecture (${len} min)`;
+
+  document.getElementById('pi').innerHTML=`
+    <div style="padding-bottom:18px;margin-bottom:22px;border-bottom:2px solid #111">
+      <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin-bottom:8px">Assessment Planner · Gujarat GSHSEB 2026–27</div>
+      <div style="font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:32px;font-weight:300;letter-spacing:-.03em;margin-bottom:4px">Class ${selClass} — ${cd.g}</div>
+      <div style="font-size:12px;color:#666">${stu} students · ${schoolDays}-day week · ${mLabel} · 4 subjects</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px">
+      ${[[stu,'Students'],[sessionMin+'min','Session'],[perDay+'/day','Assessed daily'],[totalWks+'wk'+(fits?' ✓':' ⚠'),'CP1 in 8 wks']].map(([v,l])=>`
+        <div style="border:1px solid #e9e7df;border-radius:8px;padding:13px">
+          <div style="font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:22px;font-weight:300;color:${v.toString().includes('⚠')?'#dc2626':v.toString().includes('✓')?'#16a34a':'#111'}">${v}</div>
+          <div style="font-size:11px;color:#aaa;margin-top:2px">${l}</div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#aaa;margin-bottom:10px">4 subjects</div>
+    <div style="border:1px solid #e9e7df;border-radius:8px;overflow:hidden;margin-bottom:22px">
+      ${cd.subjs.map((s,i)=>`<div style="display:grid;grid-template-columns:12px 1fr 80px 80px;gap:12px;padding:12px 14px;border-bottom:1px solid #f0ede6;align-items:center">
+        <div style="width:9px;height:9px;border-radius:50%;background:${s.h}"></div>
+        <div style="font-size:13px;font-weight:500">${s.n}</div>
+        <div style="font-size:12px;color:#666">${wps} wk${wps>1?'s':''}</div>
+        <div style="font-size:12px;font-weight:600;color:${(i+1)*wps<=8?'#16a34a':'#dc2626'};text-align:right">${(i+1)*wps<=8?'✓ before CP1':'after CP1'}</div>
+      </div>`).join('')}
+    </div>
+    ${classExams(selClass).length>0?`<div style="padding:12px 14px;background:#fff1f2;border-radius:8px;font-size:12px;color:#9f1239;margin-bottom:22px"><b>Exam blackouts (auto-skipped):</b> ${classExams(selClass).map(e=>`${e.label}: ${fmt(e.s)}–${fmt(e.e)}`).join(' · ')}</div>`:''}
+    <div style="font-size:10px;color:#bbb;padding-top:14px;border-top:1px solid #eee;display:flex;justify-content:space-between">
+      <span>Assessment Planner · Class ${selClass} · Gujarat GSHSEB 2026–27</span>
+      <span>${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</span>
+    </div>`;
+  document.getElementById('pv').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function hidePrint(){document.getElementById('pv').style.display='none';document.body.style.overflow=''}
+
+go();
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy, limit, writeBatch, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyC-0kK1L9wVTDSfiQmBVTw6Ul1_jAKqDKM",
+  authDomain:        "gujrat-project-6653d.firebaseapp.com",
+  projectId:         "gujrat-project-6653d",
+  storageBucket:     "gujrat-project-6653d.firebasestorage.app",
+  messagingSenderId: "947525921677",
+  appId:             "1:947525921677:web:b1933167feeccd9ac2ebc4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const SCHOOL_ID = 'demo-school';
+
+// Warm up Firestore connection immediately on page load
+// so it's already open when teacher clicks Confirm
+getDoc(doc(db, 'schools', SCHOOL_ID)).catch(() => {});
+
+// ── CONFIRM PLAN → FIRESTORE ──
+window.confirmPlan = async function() {
+  const plan = window._currentPlan;
+  if (!plan) return;
+
+  const btn    = document.getElementById('confirm-btn');
+  const status = document.getElementById('confirm-status');
+  btn.textContent  = 'Saving...';
+  btn.disabled     = true;
+  status.innerHTML = '';
+
+  try {
+    const today  = new Date().toISOString().split('T')[0];
+    const weekId = `${today}_class${plan.selClass}`;
+
+    // 1 — Fetch exactly N students from DB; fall back to generated placeholders if collection is empty
+    btn.textContent = 'Fetching students...';
+    const snap = await getDocs(
+      query(collection(db, 'schools', SCHOOL_ID, 'students'),
+            orderBy('rollNo'),
+            limit(plan.stu))
+    );
+
+    let students;
+    if (!snap.empty) {
+      students = snap.docs.map(d => ({
+        id:                 d.id,
+        name:               d.data().name,
+        level:              d.data().level  || 'L1',
+        gender:             d.data().gender || 'M',
+        rollNo:             d.data().rollNo,
+        status:             'pending',
+        time_spent_seconds: 0,
+        last_question:      ''
+      }));
+      // If DB has fewer students than plan.stu, pad with placeholders
+      const existing = students.length;
+      for (let i = existing; i < plan.stu; i++) {
+        students.push({
+          id:                 `s${String(i + 1).padStart(3, '0')}`,
+          name:               `Student ${i + 1}`,
+          level:              'L1',
+          gender:             'M',
+          rollNo:             i + 1,
+          status:             'pending',
+          time_spent_seconds: 0,
+          last_question:      ''
+        });
+      }
+    } else {
+      // No students seeded — generate full set of placeholders
+      students = Array.from({ length: plan.stu }, (_, i) => ({
+        id:                 `s${String(i + 1).padStart(3, '0')}`,
+        name:               `Student ${i + 1}`,
+        level:              'L1',
+        gender:             'M',
+        rollNo:             i + 1,
+        status:             'pending',
+        time_spent_seconds: 0,
+        last_question:      ''
+      }));
+    }
+
+    btn.textContent = 'Saving plan...';
+
+    // 2 — Single batch write everything
+    const batch = writeBatch(db);
+
+    batch.set(doc(db, 'schools', SCHOOL_ID, 'plan', weekId), {
+      confirmedAt:  serverTimestamp(),
+      class:        plan.selClass,
+      schoolDays:   plan.schoolDays,
+      mode:         plan.mode,
+      studentCount: plan.stu,
+      totalWeeks:   plan.totalWks,
+      cpWindow:     plan.cpWindowMode,
+      fits:         plan.fits,
+      subjects:     plan.subjs.map(s => ({ id: s.id, name: s.n, color: s.h }))
+    });
+
+    // current_session — student app reads this immediately
+    const firstSubj = plan.subjWks[0];
+    batch.set(doc(db, 'schools', SCHOOL_ID, 'meta', 'current_session'), {
+      subject:      firstSubj?.n  || 'Mathematics',
+      subjectId:    firstSubj?.id || 'math',
+      color:        firstSubj?.h  || '#d97706',
+      class:        plan.selClass,
+      mode:         plan.mode,
+      studentCount: plan.stu,
+      students:     students,
+      status:       'active',
+      planId:       weekId,
+      confirmedAt:  serverTimestamp()
+    });
+
+    let sessionCount = 0;
+    for (const subj of plan.subjWks) {
+      for (const wk of subj.weeks) {
+        const dateStr = wk.start.toISOString().split('T')[0];
+        batch.set(doc(db, 'schools', SCHOOL_ID, 'sessions', dateStr), {
+          date:         dateStr,
+          subject:      subj.n,
+          subjectId:    subj.id,
+          color:        subj.h,
+          class:        plan.selClass,
+          mode:         plan.mode,
+          studentCount: plan.stu,
+          status:       'scheduled',
+          planId:       weekId,
+          confirmedAt:  serverTimestamp()
+        });
+        sessionCount++;
+      }
+    }
+
+    await batch.commit();
+
+    btn.textContent      = '✅ Plan Confirmed';
+    btn.style.background = 'rgba(16,185,129,.2)';
+    btn.style.color      = '#059669';
+    status.innerHTML = `
+      <div style="margin-top:12px;padding:12px 16px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;font-size:13px;color:#059669;line-height:1.7">
+        <strong>✓ Plan saved to Firebase</strong><br>
+        ${students.length} students loaded · ${sessionCount} sessions scheduled · Student app will reflect this immediately<br>
+        <span style="font-size:11px;opacity:.65">Plan ID: ${weekId}</span>
+      </div>`;
+
+  } catch(err) {
+    console.error(err);
+    btn.textContent = '✗ Error — try again';
+    btn.disabled    = false;
+    status.innerHTML = `<div style="margin-top:8px;font-size:12px;color:var(--bad)">Error: ${err.message}</div>`;
+  }
+};
+</script>
+</body>
+</html>

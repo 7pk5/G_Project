@@ -2,8 +2,8 @@
   "date": "2026-10-14",
   "subject": "Mathematics",
   "chapter": "Fractions",
-  "day_of_week": 2,
-  "total_days": 4,
+  "day_of_week": 1,
+  "total_days": 1,
   "students": [
     { "id": "s001", "name": "Aarav Patel", "status": "in_progress", "level": "L2", "time_spent_seconds": 125, "last_question": "Fractions as parts of a whole" },
     { "id": "s002", "name": "Diya Shah", "status": "done", "level": "L3", "time_spent_seconds": 180, "last_question": "Equivalent Fractions" },

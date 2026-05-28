@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Today's Session · Miko</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f2;
+  --surface:#ffffff;
+  --border:#e9e7df;
+  --ink:#111110;
+  --ink2:#4a4844;
+  --ink3:#7a7670;
+  --ok:#16a34a; --ok-bg:#f0fdf4; --ok-b:#bbf7d0;
+  --warn:#b45309; --warn-bg:#fffbeb;
+  --bad:#dc2626; --bad-bg:#fef2f2;
+}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);color:var(--ink);
+  min-height:100vh;font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── NAV ── */
+.nav{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  height:56px;display:flex;align-items:center;
+  padding:0 24px;gap:12px;position:sticky;top:0;z-index:50;
+}
+.nav-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--ink)}
+.nav-sep{width:1px;height:14px;background:var(--border);flex-shrink:0}
+.nav-sub{font-size:12px;color:var(--ink3)}
+.nav-date{margin-left:auto;font-size:12px;font-weight:500;color:var(--ink2);background:var(--bg);padding:4px 12px;border-radius:99px;border:1px solid var(--border)}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:#EF9F27;animation:pulse 1.4s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── PAGE ── */
+.page{max-width:900px;margin:0 auto;padding:28px 20px 60px;display:flex;flex-direction:column;gap:20px}
+
+/* ── LOADING / ERROR ── */
+.state-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:52px 32px;text-align:center;
+}
+.state-icon{font-size:36px;margin-bottom:14px}
+.state-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--ink);margin-bottom:8px}
+.state-body{font-size:13px;color:var(--ink3);line-height:1.6;max-width:380px;margin:0 auto}
+.state-action{
+  margin-top:18px;display:inline-flex;align-items:center;gap:6px;
+  padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;
+  font-family:inherit;cursor:pointer;border:none;
+  background:var(--ink);color:#fff;
+}
+.state-action:hover{background:#333}
+
+/* ── SESSION HEADER ── */
+.session-header{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:24px 28px;display:flex;align-items:flex-start;justify-content:space-between;
+  gap:20px;flex-wrap:wrap;
+}
+.sh-left{display:flex;flex-direction:column;gap:6px}
+.sh-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--ink3);display:flex;align-items:center;gap:6px}
+.sh-subject{font-family:'Playfair Display',serif;font-size:32px;font-weight:500;color:var(--ink);line-height:1.1}
+.sh-chapter{font-size:14px;color:var(--ink2);margin-top:2px}
+.sh-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.sh-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:500;background:var(--bg);border:1px solid var(--border);color:var(--ink2)}
+.sh-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:120px}
+.sh-count{font-family:'Playfair Display',serif;font-size:44px;font-weight:500;color:var(--ink);line-height:1}
+.sh-count-label{font-size:12px;color:var(--ink3);text-align:right}
+.sh-status{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:600}
+.sh-status.live{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-b)}
+.sh-status.pending{background:var(--warn-bg);color:var(--warn);border:1px solid #fde68a}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.stat-n{font-family:'Playfair Display',serif;font-size:28px;font-weight:500;color:var(--ink);line-height:1;margin-bottom:4px}
+.stat-l{font-size:12px;color:var(--ink3)}
+
+/* ── STUDENTS SECTION ── */
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.07em}
+.section-count{font-size:12px;color:var(--ink3)}
+
+.student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.stu-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  transition:border-color .15s;
+}
+.stu-card:hover{border-color:#ccc9be}
+.stu-avatar{
+  width:38px;height:38px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.stu-info{min-width:0;flex:1}
+.stu-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stu-level{font-size:11px;color:var(--ink3);margin-top:2px}
+.stu-status{
+  font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0;
+}
+.s-pending  {background:#f3f4f6;color:#6b7280}
+.s-in_progress{background:#dbeafe;color:#1d4ed8}
+.s-done     {background:var(--ok-bg);color:var(--ok)}
+.s-absent   {background:var(--bad-bg);color:var(--bad)}
+
+/* ── SCHEDULE STRIP ── */
+.schedule-strip{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+.schedule-title{font-size:13px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.week-sessions{display:flex;flex-direction:column;gap:8px}
+.week-row{
+  display:flex;align-items:center;gap:14px;padding:12px 16px;
+  border-radius:10px;background:var(--bg);border:1px solid transparent;
+}
+.week-row.current-week{background:#eff6ff;border-color:#bfdbfe}
+.wr-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.wr-subj{font-size:13px;font-weight:600;color:var(--ink);flex:1}
+.wr-date{font-size:12px;color:var(--ink3);white-space:nowrap}
+.wr-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;background:#dbeafe;color:#1d4ed8;white-space:nowrap}
+.wr-badge.done{background:var(--ok-bg);color:var(--ok)}
+
+/* ── FOOTER ── */
+.footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:0 4px}
+.footer-info{font-size:12px;color:var(--ink3)}
+.refresh-btn{
+  padding:7px 16px;font-size:12px;font-weight:600;font-family:inherit;
+  border-radius:8px;border:1px solid var(--border);background:var(--surface);
+  color:var(--ink2);cursor:pointer;transition:all .15s;
+}
+.refresh-btn:hover{background:var(--bg);border-color:#ccc9be}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .35s ease both}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <span class="nav-logo">Miko</span>
+  <div class="nav-sep"></div>
+  <span class="nav-sub">Today's Session</span>
+  <div id="nav-dot" class="nav-dot" style="display:none"></div>
+  <span class="nav-date" id="nav-date">—</span>
+</header>
+
+<div class="page" id="page">
+  <!-- content injected by JS -->
+  <div class="state-card fade-up">
+    <div class="state-icon">⏳</div>
+    <div class="state-title">Loading session…</div>
+    <div class="state-body">Connecting to Firebase</div>
+  </div>
+</div>
+
+<script>
+// Firestore REST API — no SDK, no WebSocket, no PI-Error
+const FS_PROJECT = 'gujrat-project-6653d';
+const FS_KEY     = 'AIzaSyC-0kK1L9wVTDSfiQmBVTw6Ul1_jAKqDKM';
+const FS_BASE    = `https://firestore.googleapis.com/v1/projects/${FS_PROJECT}/databases/(default)/documents`;
+const SCHOOL     = 'demo-school';
+
+function fsURL(path) { return `${FS_BASE}${path}?key=${FS_KEY}`; }
+
+function fsVal(v) {
+  if (!v || typeof v !== 'object') return null;
+  if ('stringValue'    in v) return v.stringValue;
+  if ('integerValue'   in v) return parseInt(v.integerValue, 10);
+  if ('doubleValue'    in v) return v.doubleValue;
+  if ('booleanValue'   in v) return v.booleanValue;
+  if ('timestampValue' in v) return v.timestampValue;
+  if ('nullValue'      in v) return null;
+  if ('arrayValue'     in v) return (v.arrayValue.values || []).map(fsVal);
+  if ('mapValue'       in v) return fsDoc(v.mapValue);
+  return null;
+}
+function fsDoc(d) {
+  if (!d || !d.fields) return {};
+  const o = {};
+  for (const [k, v] of Object.entries(d.fields)) o[k] = fsVal(v);
+  return o;
+}
+
+async function fsGet(path) {
+  const r = await fetch(fsURL(path), { cache: 'no-cache' });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`Firestore HTTP ${r.status}`);
+  return fsDoc(await r.json());
+}
+
+async function fsList(path) {
+  const r = await fetch(fsURL(path), { cache: 'no-cache' });
+  if (!r.ok) throw new Error(`Firestore HTTP ${r.status}`);
+  const body = await r.json();
+  return (body.documents || []).map(d => fsDoc(d));
+}
+
+const COLORS = ['#E85D55','#4A3FB7','#1D9E75','#EF9F27','#0284c7','#7c3aed'];
+const SUBJ_COLORS = {
+  math:'#d97706', lang:'#2563eb', evs:'#059669', sci:'#059669',
+  eng:'#2563eb',  soc:'#7c3aed', phy:'#059669', chem:'#2563eb', bio:'#7c3aed', art:'#7c3aed'
+};
+
+function getWeekMonday(d) {
+  const date = new Date(d);
+  const day  = date.getDay();
+  date.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+  date.setHours(0,0,0,0);
+  return date;
+}
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+function fmtShort(d) {
+  return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+}
+function initials(name) {
+  return (name||'').split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+}
+function statusLabel(s){
+  return {pending:'Pending',in_progress:'In Progress',done:'Done',absent:'Absent'}[s]||s;
+}
+
+// ── Update nav date ──
+const today = new Date();
+document.getElementById('nav-date').textContent =
+  today.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+// ── Main load ──
+async function load() {
+  const page = document.getElementById('page');
+  try {
+    const cs = await fsGet(`/schools/${SCHOOL}/meta/current_session`);
+    if (!cs || !cs.subject) {
+      const fallback = await serverFallback();
+      if (fallback) { renderSession(page, fallback, []); return; }
+      renderNoSession(page); return;
+    }
+
+    let sessions = [];
+    try { sessions = await fsList(`/schools/${SCHOOL}/sessions`); } catch(e) {}
+    sessions.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    renderSession(page, cs, sessions);
+  } catch(err) {
+    const fallback = await serverFallback();
+    if (fallback) { renderSession(page, fallback, []); return; }
+    renderError(page, err.message);
+  }
+}
+
+async function serverFallback() {
+  try {
+    const r = await fetch('/student/assets/packages/shared_core/assets/mock/today_session.json', { cache: 'no-cache' });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return (d && d.subject) ? d : null;
+  } catch(e) { return null; }
+}
+
+// ── Render: session exists ──
+function renderSession(page, cs, sessions) {
+  const students  = Array.isArray(cs.students) ? cs.students : [];
+  const subject   = cs.subject    || '—';
+  const chapter   = cs.chapter    || '';
+  const classNum  = cs.class      || '—';
+  const planId    = cs.planId     || '';
+  const subjectId = cs.subjectId  || 'math';
+  const accentColor = cs.color || SUBJ_COLORS[subjectId] || '#d97706';
+
+  const totalStu  = students.length;
+  const done      = students.filter(s => s.status === 'done').length;
+  const inProg    = students.filter(s => s.status === 'in_progress').length;
+  const absent    = students.filter(s => s.status === 'absent').length;
+  const pending   = totalStu - done - inProg - absent;
+
+  // Find current week's session from sessions list
+  const mondayStr = getWeekMonday(today).toISOString().split('T')[0];
+  const currentWeekSession = sessions.find(s => s.date === mondayStr);
+  const isLive    = cs.status === 'active';
+
+  // Show live dot
+  document.getElementById('nav-dot').style.display = isLive ? 'block' : 'none';
+
+  // ── Build HTML ──
+  let html = '';
+
+  // Session header card
+  html += `
+  <div class="session-header fade-up" style="border-top:4px solid ${accentColor}">
+    <div class="sh-left">
+      <div class="sh-label">
+        <span style="width:8px;height:8px;border-radius:50%;background:${accentColor};display:inline-block"></span>
+        ${isLive ? 'Active Session' : 'Scheduled Session'}
+      </div>
+      <div class="sh-subject">${subject}</div>
+      ${chapter ? `<div class="sh-chapter">${chapter}</div>` : ''}
+      <div class="sh-meta">
+        <span class="sh-chip">🏫 Class ${classNum}</span>
+        <span class="sh-chip">📅 ${fmtDate(today)}</span>
+        ${planId ? `<span class="sh-chip" style="font-size:10px;opacity:.7">Plan: ${planId}</span>` : ''}
+      </div>
+    </div>
+    <div class="sh-right">
+      <div class="sh-count">${totalStu}</div>
+      <div class="sh-count-label">students</div>
+      <span class="sh-status ${isLive ? 'live' : 'pending'}">${isLive ? '● Live' : '◎ Scheduled'}</span>
+    </div>
+  </div>`;
+
+  // Stats row
+  html += `
+  <div class="stats-row fade-up">
+    <div class="stat-card"><div class="stat-n" style="color:#6b7280">${pending}</div><div class="stat-l">Pending</div></div>
+    <div class="stat-card"><div class="stat-n" style="color:#1d4ed8">${inProg}</div><div class="stat-l">In Progress</div></div>
+    <div class="stat-card"><div class="stat-n" style="color:var(--ok)">${done}</div><div class="stat-l">Done</div></div>
+    <div class="stat-card"><div class="stat-n" style="color:var(--bad)">${absent}</div><div class="stat-l">Absent</div></div>
+  </div>`;
+
+  // Upcoming schedule (if sessions exist)
+  if (sessions.length > 0) {
+    const upcomingSessions = sessions.slice(0, 10);
+    const rows = upcomingSessions.map(s => {
+      const isCurrent = s.date === mondayStr;
+      const isPast    = s.date < mondayStr;
+      const dotColor  = SUBJ_COLORS[s.subjectId] || '#d97706';
+      return `
+      <div class="week-row${isCurrent ? ' current-week' : ''}">
+        <div class="wr-dot" style="background:${dotColor}"></div>
+        <div class="wr-subj">${s.subject || '—'}</div>
+        <div class="wr-date">${fmtShort(s.date + 'T00:00:00')}</div>
+        ${isCurrent ? '<span class="wr-badge">This week</span>' : isPast ? '<span class="wr-badge done">Done</span>' : ''}
+      </div>`;
+    }).join('');
+
+    html += `
+    <div class="schedule-strip fade-up">
+      <div class="schedule-title">Assessment Schedule</div>
+      <div class="week-sessions">${rows}</div>
+    </div>`;
+  }
+
+  // Student grid
+  if (totalStu > 0) {
+    const cards = students.map((s, i) => {
+      const color = COLORS[i % COLORS.length];
+      const status = s.status || 'pending';
+      const lvl = s.level || 'L1';
+      return `
+      <div class="stu-card">
+        <div class="stu-avatar" style="background:${color}">${initials(s.name)}</div>
+        <div class="stu-info">
+          <div class="stu-name">${s.name || 'Student'}</div>
+          <div class="stu-level">Level ${lvl} · Roll ${s.rollNo || (i+1)}</div>
+        </div>
+        <span class="stu-status s-${status}">${statusLabel(status)}</span>
+      </div>`;
+    }).join('');
+
+    html += `
+    <div class="fade-up">
+      <div class="section-hd">
+        <span class="section-title">Students</span>
+        <span class="section-count">${totalStu} enrolled</span>
+      </div>
+      <div class="student-grid">${cards}</div>
+    </div>`;
+  }
+
+  // Footer
+  const refreshed = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  html += `
+  <div class="footer fade-up">
+    <span class="footer-info">Last refreshed at ${refreshed}</span>
+    <button class="refresh-btn" onclick="location.reload()">↻ Refresh</button>
+  </div>`;
+
+  page.innerHTML = html;
+}
+
+// ── Render: no session scheduled ──
+function renderNoSession(page) {
+  page.innerHTML = `
+  <div class="state-card fade-up">
+    <div class="state-icon">📋</div>
+    <div class="state-title">No session scheduled yet</div>
+    <div class="state-body">
+      Open the <strong>Assessment Planner</strong>, configure your class, and click
+      <strong>Confirm Plan</strong> — this board will update instantly.
+    </div>
+    <button class="state-action" onclick="location.reload()">↻ Check again</button>
+  </div>`;
+}
+
+// ── Render: error ──
+function renderError(page, msg) {
+  page.innerHTML = `
+  <div class="state-card fade-up">
+    <div class="state-icon">⚠️</div>
+    <div class="state-title">Couldn't load session</div>
+    <div class="state-body" style="color:var(--bad)">${msg}</div>
+    <button class="state-action" onclick="location.reload()">↻ Retry</button>
+  </div>`;
+}
+
+// Auto-refresh every 30 seconds
+setTimeout(() => location.reload(), 30_000);
+
+load();
+</script>
+</body>
+</html>

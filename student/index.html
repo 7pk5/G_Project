@@ -14,7 +14,7 @@
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
-  <base href="/student/">
+  <base href="./">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -33,14 +33,79 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <!-- Data status banner — visible until Flutter renders, hides after 8s -->
+  <div id="miko-status" style="
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+    background:rgba(17,17,16,0.88); color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;
+    font-size:13px; font-weight:500;
+    padding:10px 20px; border-radius:99px;
+    display:flex; align-items:center; gap:10px;
+    z-index:9999; backdrop-filter:blur(8px);
+    transition:opacity .4s; pointer-events:none;">
+    <span id="miko-status-dot" style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;animation:mikoPulse 1.2s ease-in-out infinite"></span>
+    <span id="miko-status-text">Connecting to Firestore…</span>
+  </div>
+
+  <style>
+    @keyframes mikoPulse {
+      0%,100%{opacity:1} 50%{opacity:.35}
+    }
+  </style>
+
   <script src="flutter_bootstrap.js" async></script>
+
+  <script>
+    const _statusEl   = document.getElementById('miko-status');
+    const _statusDot  = document.getElementById('miko-status-dot');
+    const _statusText = document.getElementById('miko-status-text');
+    let   _hideTimer  = null;
+
+    function mikoSetStatus(dot, text, autoHide) {
+      _statusDot.style.background  = dot;
+      _statusDot.style.animation   = autoHide ? 'none' : 'mikoPulse 1.2s ease-in-out infinite';
+      _statusText.textContent = text;
+      clearTimeout(_hideTimer);
+      if (autoHide) {
+        _hideTimer = setTimeout(() => { _statusEl.style.opacity = '0'; }, autoHide);
+      }
+    }
+
+    // Register the Miko bridge service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/student/miko-bridge-sw.js', { scope: '/student/' })
+        .then(reg => {
+          console.log('[MikoBridge] Service worker registered');
+          // Force update if a new version is waiting
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                nw.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        })
+        .catch(err => {
+          console.warn('[MikoBridge] SW registration failed:', err);
+          mikoSetStatus('#dc2626', 'Service worker failed — using demo data', 6000);
+        });
+
+      // Listen for data-load status messages from the service worker
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type !== 'MIKO_DATA_STATUS') return;
+        const { source, count, subject, error } = e.data;
+        if (source === 'firestore') {
+          mikoSetStatus('#16a34a', `${count} students loaded · ${subject}`, 5000);
+        } else {
+          mikoSetStatus('#EF9F27', `Demo data (${count} students) — no plan confirmed yet`, 7000);
+        }
+      });
+    } else {
+      mikoSetStatus('#dc2626', 'Service workers not supported in this browser', 8000);
+    }
+  </script>
 </body>
 </html>

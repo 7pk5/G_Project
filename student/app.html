@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Miko — Teacher Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --border: #e9e7df;
+    --ink: #111110;
+    --ink2: #4a4844;
+    --ink3: #7a7670;
+    --ok: #16a34a;
+    --ok-bg: #f0fdf4;
+    --warn: #b45309;
+    --warn-bg: #fffbeb;
+    --bad: #dc2626;
+    --bad-bg: #fef2f2;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 8px rgba(0,0,0,.04);
+    --nav-h: 60px;
+    --font: 'Inter', system-ui, sans-serif;
+    --font-display: 'Playfair Display', Georgia, serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── NAV ─── */
+  #nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--nav-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 4px;
+    z-index: 100;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #nav::-webkit-scrollbar { display: none; }
+
+  .nav-brand {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+    margin-right: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .nav-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink3);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-height: 44px;
+    transition: background .15s, color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-btn:hover { background: var(--bg); color: var(--ink2); }
+  .nav-btn.active { background: var(--blue-bg); color: var(--blue); }
+
+  .nav-spacer { flex: 1; }
+
+  #data-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all .3s;
+  }
+
+  #data-indicator.firebase { color: var(--ok); border-color: #bbf7d0; background: var(--ok-bg); }
+  #data-indicator.local { color: var(--warn); border-color: #fde68a; background: var(--warn-bg); }
+  #data-indicator.loading { color: var(--ink3); }
+
+  #data-indicator .dot { font-size: 10px; }
+
+  /* ─── MAIN CONTENT ─── */
+  #app {
+    padding-top: var(--nav-h);
+    min-height: 100vh;
+  }
+
+  .tab-panel {
+    display: none;
+    animation: fadeIn .2s ease;
+    padding: 24px 16px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .tab-panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── SKELETON ─── */
+  .skeleton {
+    background: linear-gradient(90deg, #ede9e1 25%, #f5f3ee 50%, #ede9e1 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: var(--radius-sm);
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .skel-block { display: block; }
+
+  /* ─── SECTION HEADING ─── */
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .section-sub {
+    font-size: 13px;
+    color: var(--ink3);
+    margin-bottom: 20px;
+  }
+
+  /* ─── TODAY TAB ─── */
+  .session-banner {
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .session-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .banner-subject {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+  }
+
+  .banner-chapter {
+    font-size: 15px;
+    color: rgba(255,255,255,.85);
+    margin-top: 2px;
+  }
+
+  .banner-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .banner-chip {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .stat-pill {
+    border-radius: var(--radius);
+    padding: 14px 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .stat-pill .num {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-pill .lbl {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-top: 4px;
+  }
+
+  .stat-done .num { color: var(--ok); }
+  .stat-done .lbl { color: var(--ok); }
+  .stat-progress .num { color: var(--blue); }
+  .stat-progress .lbl { color: var(--blue); }
+  .stat-pending .num { color: var(--ink3); }
+  .stat-pending .lbl { color: var(--ink3); }
+  .stat-absent .num { color: var(--bad); }
+  .stat-absent .lbl { color: var(--bad); }
+
+  .student-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .student-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow);
+    transition: box-shadow .15s;
+    cursor: default;
+  }
+
+  .student-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,.09); }
+
+  .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    letter-spacing: -.3px;
+  }
+
+  .student-info { flex: 1; min-width: 0; }
+
+  .student-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .student-last-q {
+    font-size: 13px;
+    color: var(--ink3);
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+
+  .student-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+
+  .badge-level-l1 { background: #f3f4f6; color: #6b7280; }
+  .badge-level-l2 { background: var(--blue-bg); color: var(--blue); }
+  .badge-level-l3 { background: #fffbeb; color: #d97706; }
+  .badge-level-l4 { background: var(--ok-bg); color: var(--ok); }
+
+  .badge-done { background: var(--ok-bg); color: var(--ok); }
+  .badge-in_progress { background: var(--blue-bg); color: var(--blue); }
+  .badge-pending { background: #f3f4f6; color: #6b7280; }
+  .badge-absent { background: var(--bad-bg); color: var(--bad); }
+
+  .time-spent {
+    font-size: 12px;
+    color: var(--ink3);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .no-session {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .no-session .icon { font-size: 36px; margin-bottom: 12px; }
+
+  .no-session p {
+    color: var(--ink3);
+    font-size: 15px;
+  }
+
+  /* ─── CLASS TAB ─── */
+  .class-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  @media (min-width: 700px) {
+    .class-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .class-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: box-shadow .15s, transform .1s;
+    box-shadow: var(--shadow);
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+
+  .class-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-1px); }
+  .class-card:active { transform: translateY(0); }
+
+  .class-card .card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .class-card .student-name { font-size: 14px; }
+  .class-card .roll { font-size: 12px; color: var(--ink3); margin-top: 1px; }
+
+  .level-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .level-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .level-row .subj-abbr {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink3);
+    width: 26px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+  }
+
+  .level-pips {
+    display: flex;
+    gap: 3px;
+  }
+
+  .pip {
+    width: 14px;
+    height: 8px;
+    border-radius: 3px;
+    background: #e5e7eb;
+  }
+
+  .pip.filled-1 { background: #9ca3af; }
+  .pip.filled-2 { background: var(--blue); }
+  .pip.filled-3 { background: #d97706; }
+  .pip.filled-4 { background: var(--ok); }
+
+  .flag-icon {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  /* ─── STUDENT DETAIL PANEL ─── */
+  #detail-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  #detail-panel.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #detail-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    backdrop-filter: blur(2px);
+  }
+
+  #detail-sheet {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: min(480px, 100vw);
+    background: var(--bg);
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    padding-bottom: 40px;
+  }
+
+  #detail-panel.open #detail-sheet {
+    transform: translateX(0);
+  }
+
+  .detail-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--blue);
+    cursor: pointer;
+    padding: 8px 0;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .back-btn svg { width: 18px; height: 18px; }
+
+  .detail-body { padding: 20px; }
+
+  .detail-student-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .detail-avatar { width: 64px; height: 64px; font-size: 22px; }
+
+  .detail-student-name {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .detail-roll { font-size: 14px; color: var(--ink3); margin-top: 2px; }
+
+  .detail-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--ink3);
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .level-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .level-cell .subj-name { font-size: 13px; font-weight: 500; color: var(--ink2); }
+
+  .flag-card {
+    background: var(--warn-bg);
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+
+  .flag-card .flag-subj { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--warn); margin-bottom: 4px; }
+  .flag-card .flag-concept { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .flag-card .flag-note { font-size: 13px; color: var(--ink2); }
+
+  .session-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .session-item .sess-date { font-size: 12px; color: var(--ink3); font-weight: 500; white-space: nowrap; margin-top: 1px; }
+  .session-item .sess-info { flex: 1; min-width: 0; }
+  .session-item .sess-subj { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--ink3); margin-bottom: 2px; }
+  .session-item .sess-concept { font-size: 14px; font-weight: 500; color: var(--ink); }
+  .session-item .sess-outcome { font-size: 12px; color: var(--ink3); margin-top: 2px; font-style: italic; }
+
+  /* ─── CURRICULUM TAB ─── */
+  .curriculum-header {
+    margin-bottom: 20px;
+  }
+
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .concept-top {
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 56px;
+  }
+
+  .concept-top:hover { background: #fafaf8; }
+
+  .concept-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .expand-icon {
+    font-size: 18px;
+    color: var(--ink3);
+    transition: transform .2s;
+    flex-shrink: 0;
+  }
+
+  .concept-card.expanded .expand-icon { transform: rotate(180deg); }
+
+  .concept-detail {
+    display: none;
+    padding: 0 18px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .concept-card.expanded .concept-detail { display: block; }
+
+  .qa-block { margin-top: 12px; }
+
+  .qa-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--ink3);
+    margin-bottom: 6px;
+  }
+
+  .qa-text {
+    font-size: 14px;
+    color: var(--ink2);
+    line-height: 1.55;
+  }
+
+  .answer-toggle {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--blue);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    padding: 6px 0;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .answer-content {
+    display: none;
+    margin-top: 4px;
+  }
+
+  .answer-content.revealed { display: block; }
+
+  /* ─── REPORT TAB ─── */
+  .report-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .cp-badge {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  .report-meta { flex: 1; }
+  .report-meta .rdate { font-size: 13px; color: var(--ink3); }
+  .report-meta .rideal { font-size: 14px; font-weight: 600; color: var(--ink2); margin-top: 2px; }
+
+  .weakness-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  @media (min-width: 600px) {
+    .weakness-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .weakness-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 14px;
+    box-shadow: var(--shadow);
+  }
+
+  .weakness-card .wc-subj {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 6px;
+  }
+
+  .weakness-card .wc-status { font-size: 13px; color: var(--ink2); margin-bottom: 8px; line-height: 1.4; }
+
+  .wc-bar-track {
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .wc-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--bad);
+    transition: width .6s ease;
+  }
+
+  .wc-nums { font-size: 11px; color: var(--ink3); margin-top: 4px; }
+
+  .report-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: auto;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    background: #fafaf8;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--ink3);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink2);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .status-badge-report {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    white-space: nowrap;
+  }
+
+  .status-ahead { background: var(--ok-bg); color: var(--ok); }
+  .status-on_track { background: var(--blue-bg); color: var(--blue); }
+  .status-behind { background: var(--bad-bg); color: var(--bad); }
+
+  .incomplete-card {
+    background: var(--bad-bg);
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+  }
+
+  .incomplete-card .ic-name { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .incomplete-card .ic-detail { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+
+  /* ─── REFRESH INDICATOR ─── */
+  .refresh-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    min-height: 32px;
+  }
+
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink3);
+    padding: 6px 12px;
+    cursor: pointer;
+    min-height: 36px;
+    transition: background .15s, color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .refresh-btn:hover { background: var(--bg); color: var(--ink2); }
+
+  .refresh-btn svg { width: 14px; height: 14px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinning { animation: spin .8s linear infinite; }
+
+  .last-updated {
+    font-size: 12px;
+    color: var(--ink3);
+  }
+
+  /* ─── MATH subject color ─── */
+  .subj-math { color: #d97706; }
+  .subj-science { color: #059669; }
+  .subj-language { color: var(--blue); }
+  .subj-social { color: #7c3aed; }
+
+  /* ─── EMPTY STATE ─── */
+  .empty {
+    text-align: center;
+    padding: 32px;
+    color: var(--ink3);
+    font-size: 14px;
+  }
+
+  /* ─── SKELETON LOADERS ─── */
+  .skel-banner { height: 108px; border-radius: var(--radius); margin-bottom: 20px; }
+  .skel-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .skel-stat { height: 76px; border-radius: var(--radius); }
+  .skel-card { height: 72px; border-radius: var(--radius); margin-bottom: 8px; }
+  .skel-card-class { height: 120px; border-radius: var(--radius); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .stat-pill .num { font-size: 24px; }
+    .tab-panel { padding: 16px 12px; }
+  }
+
+  /* ─── SESSION DIALOGUE OVERLAY ─── */
+  #session-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: #0f0f0e;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+  #session-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .so-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.04);
+    flex-shrink: 0;
+  }
+  .so-close {
+    width: 36px; height: 36px;
+    border: none; background: rgba(255,255,255,.12);
+    border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 18px;
+    flex-shrink: 0;
+    transition: background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .so-close:hover { background: rgba(255,255,255,.22); }
+  .so-student-info { flex: 1; min-width: 0; }
+  .so-student-name { font-size: 16px; font-weight: 700; color: #fff; }
+  .so-student-meta { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 2px; }
+  .so-subject-chip {
+    padding: 5px 14px; border-radius: 99px;
+    font-size: 12px; font-weight: 600; color: #fff;
+    flex-shrink: 0;
+  }
+
+  .so-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 24px 24px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Visual aid area */
+  .so-visual {
+    flex: 1;
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .visual-aid {
+    width: 100%;
+    max-width: 320px;
+    opacity: 0;
+    transform: scale(.9) translateY(8px);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .visual-aid.show {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  /* Chat bubble */
+  .so-bubble-wrap {
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 16px;
+  }
+
+  .so-bubble {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 20px 20px 20px 6px;
+    padding: 20px 24px;
+    backdrop-filter: blur(8px);
+    position: relative;
+  }
+
+  .so-stage-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .9px;
+    color: rgba(255,255,255,.4);
+    margin-bottom: 8px;
+  }
+
+  .so-text {
+    font-size: 18px;
+    font-weight: 500;
+    color: #fff;
+    line-height: 1.5;
+    min-height: 54px;
+  }
+
+  .so-thinking {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 4px 0;
+  }
+  .so-thinking span {
+    width: 10px; height: 10px;
+    background: rgba(255,255,255,.5);
+    border-radius: 50%;
+    animation: thinkBounce 1.1s ease-in-out infinite;
+  }
+  .so-thinking span:nth-child(2) { animation-delay: .18s; }
+  .so-thinking span:nth-child(3) { animation-delay: .36s; }
+  @keyframes thinkBounce {
+    0%,80%,100% { transform: translateY(0); opacity: .5; }
+    40% { transform: translateY(-8px); opacity: 1; }
+  }
+
+  /* Footer: progress + tap button */
+  .so-footer {
+    width: 100%;
+    max-width: 480px;
+    padding: 16px 0 max(24px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .so-progress {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+  }
+  .so-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    transition: background .25s, width .25s;
+  }
+  .so-dot.active {
+    background: #fff;
+    width: 20px;
+    border-radius: 4px;
+  }
+  .so-dot.done {
+    background: rgba(255,255,255,.55);
+  }
+
+  .so-tap-btn {
+    width: 100%;
+    padding: 17px;
+    border-radius: 16px;
+    border: none;
+    font-family: var(--font);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #fff;
+    color: #111;
+    transition: transform .1s, background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .so-tap-btn:hover { background: #f0f0f0; }
+  .so-tap-btn:active { transform: scale(.97); }
+  .so-tap-btn:disabled {
+    background: rgba(255,255,255,.15);
+    color: rgba(255,255,255,.35);
+    cursor: default;
+  }
+
+  /* Level-up celebration */
+  .so-levelup {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15,15,14,.85);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+  .so-levelup.show { opacity: 1; pointer-events: auto; }
+  .so-levelup-emoji { font-size: 64px; animation: popIn .4s cubic-bezier(.34,1.56,.64,1); }
+  .so-levelup-text { font-size: 28px; font-weight: 800; color: #fff; margin-top: 12px; }
+  .so-levelup-sub { font-size: 15px; color: rgba(255,255,255,.6); margin-top: 6px; }
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Student card clickable */
+  .student-card { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .12s; }
+  .student-card:hover { background: #fafaf8; }
+  .student-card:active { background: #f0f0ee; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <span class="nav-brand">Miko</span>
+  <span class="nav-sep"></span>
+  <button class="nav-btn active" data-tab="today" onclick="switchTab('today')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Today
+  </button>
+  <button class="nav-btn" data-tab="class" onclick="switchTab('class')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Class
+  </button>
+  <button class="nav-btn" data-tab="curriculum" onclick="switchTab('curriculum')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    Curriculum
+  </button>
+  <button class="nav-btn" data-tab="report" onclick="switchTab('report')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Report
+  </button>
+  <span class="nav-spacer"></span>
+  <div id="data-indicator" class="loading">
+    <span class="dot">○</span>
+    <span id="data-indicator-text">Loading...</span>
+  </div>
+</nav>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- TODAY TAB -->
+  <div id="tab-today" class="tab-panel active">
+    <div id="today-content">
+      <!-- skeleton -->
+      <div class="skeleton skel-block skel-banner"></div>
+      <div class="skel-stats">
+        <div class="skeleton skel-block skel-stat"></div>
+        <div class="skeleton skel-block skel-stat"></div>
+        <div class="skeleton skel-block skel-stat"></div>
+        <div class="skeleton skel-block skel-stat"></div>
+      </div>
+      <div class="skeleton skel-block skel-card"></div>
+      <div class="skeleton skel-block skel-card"></div>
+      <div class="skeleton skel-block skel-card"></div>
+    </div>
+  </div>
+
+  <!-- CLASS TAB -->
+  <div id="tab-class" class="tab-panel">
+    <div id="class-content">
+      <div class="skeleton skel-block" style="height:28px;width:220px;border-radius:8px;margin-bottom:8px;"></div>
+      <div class="skeleton skel-block" style="height:16px;width:140px;border-radius:6px;margin-bottom:20px;"></div>
+      <div class="class-grid">
+        <div class="skeleton skel-block skel-card-class"></div>
+        <div class="skeleton skel-block skel-card-class"></div>
+        <div class="skeleton skel-block skel-card-class"></div>
+        <div class="skeleton skel-block skel-card-class"></div>
+        <div class="skeleton skel-block skel-card-class"></div>
+        <div class="skeleton skel-block skel-card-class"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CURRICULUM TAB -->
+  <div id="tab-curriculum" class="tab-panel">
+    <div id="curriculum-content">
+      <div class="skeleton skel-block" style="height:28px;width:260px;border-radius:8px;margin-bottom:8px;"></div>
+      <div class="skeleton skel-block" style="height:16px;width:180px;border-radius:6px;margin-bottom:20px;"></div>
+      <div class="skeleton skel-block skel-card"></div>
+      <div class="skeleton skel-block skel-card"></div>
+      <div class="skeleton skel-block skel-card"></div>
+      <div class="skeleton skel-block skel-card"></div>
+    </div>
+  </div>
+
+  <!-- REPORT TAB -->
+  <div id="tab-report" class="tab-panel">
+    <div id="report-content">
+      <div class="skeleton skel-block" style="height:56px;width:200px;border-radius:8px;margin-bottom:20px;"></div>
+      <div class="skeleton skel-block" style="height:80px;border-radius:var(--radius);margin-bottom:12px;"></div>
+      <div class="skeleton skel-block" style="height:200px;border-radius:var(--radius);margin-bottom:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT DETAIL PANEL -->
+<div id="detail-panel" role="dialog" aria-modal="true">
+  <div id="detail-overlay" onclick="closeDetail()"></div>
+  <div id="detail-sheet">
+    <div class="detail-header">
+      <button class="back-btn" onclick="closeDetail()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Class
+      </button>
+    </div>
+    <div class="detail-body" id="detail-body">
+      <!-- filled dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- SESSION DIALOGUE OVERLAY -->
+<div id="session-overlay" role="dialog" aria-modal="true">
+  <div class="so-header">
+    <button class="so-close" onclick="closeSession()" aria-label="Close">✕</button>
+    <div class="so-student-info">
+      <div class="so-student-name" id="so-name">—</div>
+      <div class="so-student-meta" id="so-meta">—</div>
+    </div>
+    <div class="so-subject-chip" id="so-chip">—</div>
+  </div>
+
+  <div class="so-body">
+    <!-- Level-up celebration layer -->
+    <div class="so-levelup" id="so-levelup">
+      <div class="so-levelup-emoji">🌟</div>
+      <div class="so-levelup-text">Level Up!</div>
+      <div class="so-levelup-sub" id="so-levelup-sub">Moving to next level</div>
+    </div>
+
+    <!-- Visual aid -->
+    <div class="so-visual">
+      <div id="so-visual-slot"></div>
+    </div>
+
+    <!-- Chat bubble -->
+    <div class="so-bubble-wrap">
+      <div class="so-bubble">
+        <div class="so-stage-label" id="so-stage-label">—</div>
+        <div class="so-text" id="so-text"><div class="so-thinking"><span></span><span></span><span></span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="so-footer">
+    <div class="so-progress" id="so-progress"></div>
+    <button class="so-tap-btn" id="so-tap-btn" onclick="sessionNext()">Tap to continue</button>
+  </div>
+</div>
+
+<script>
+// ─── Firestore REST API (no SDK — avoids WebSocket/PI-Error) ────────────────
+const FS_PROJECT = 'gujrat-project-6653d';
+const FS_API_KEY = 'AIzaSyC-0kK1L9wVTDSfiQmBVTw6Ul1_jAKqDKM';
+const FS_BASE    = `https://firestore.googleapis.com/v1/projects/${FS_PROJECT}/databases/(default)/documents`;
+const FS_SCHOOL  = 'demo-school';
+
+function fsURL(path) {
+  return `${FS_BASE}${path}?key=${FS_API_KEY}`;
+}
+
+// Parse Firestore REST field value recursively
+function fsParseValue(v) {
+  if (!v || typeof v !== 'object') return null;
+  if ('stringValue'    in v) return v.stringValue;
+  if ('integerValue'   in v) return parseInt(v.integerValue, 10);
+  if ('doubleValue'    in v) return v.doubleValue;
+  if ('booleanValue'   in v) return v.booleanValue;
+  if ('timestampValue' in v) return v.timestampValue;
+  if ('nullValue'      in v) return null;
+  if ('arrayValue'     in v) return (v.arrayValue.values || []).map(fsParseValue);
+  if ('mapValue'       in v) return fsParseDoc(v.mapValue);
+  return null;
+}
+function fsParseDoc(doc) {
+  if (!doc || !doc.fields) return {};
+  const out = {};
+  for (const [k, val] of Object.entries(doc.fields)) out[k] = fsParseValue(val);
+  return out;
+}
+
+// GET a single Firestore document; returns parsed object or null
+async function fsGet(path) {
+  const res = await fetch(fsURL(path), { cache: 'no-cache' });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Firestore ${res.status} on ${path}`);
+  return fsParseDoc(await res.json());
+}
+
+// LIST a Firestore collection; returns array of parsed objects
+async function fsList(path) {
+  const res = await fetch(fsURL(path), { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`Firestore ${res.status} on ${path}`);
+  const body = await res.json();
+  return (body.documents || []).map(d => fsParseDoc(d));
+}
+
+// ─── Data cache ─────────────────────────────────────────────────────────────
+const DATA = {
+  todaySession: null,
+  classSample: null,
+  curriculumSample: null,
+  checkpointReport: null,
+  sessionDialogue: null,
+  source: 'loading', // 'firebase' | 'local' | 'loading'
+  lastUpdated: null,
+};
+
+// ─── Data source indicator ───────────────────────────────────────────────────
+function setIndicator(source) {
+  DATA.source = source;
+  const el = document.getElementById('data-indicator');
+  const txt = document.getElementById('data-indicator-text');
+  el.className = '';
+  if (source === 'firebase') {
+    el.classList.add('firebase');
+    el.querySelector('.dot').textContent = '●';
+    txt.textContent = 'Firebase';
+  } else if (source === 'local') {
+    el.classList.add('local');
+    el.querySelector('.dot').textContent = '○';
+    txt.textContent = 'Local data';
+  } else {
+    el.classList.add('loading');
+    el.querySelector('.dot').textContent = '○';
+    txt.textContent = 'Loading…';
+  }
+}
+
+// ─── Fetch helpers ───────────────────────────────────────────────────────────
+// Absolute path — works whether app.html is served at /app, /student/, or any other route
+const BASE = '/student/assets/packages/shared_core/assets/mock/';
+
+async function fetchJson(path) {
+  const res = await fetch(path, { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${path}`);
+  return res.json();
+}
+
+async function loadAllLocal() {
+  const [todaySession, classSample, curriculumSample, checkpointReport, sessionDialogue] = await Promise.all([
+    fetchJson(BASE + 'today_session.json'),
+    fetchJson(BASE + 'class_sample.json'),
+    fetchJson(BASE + 'curriculum_sample.json'),
+    fetchJson(BASE + 'checkpoint_report_cp2.json'),
+    fetchJson(BASE + 'simulated_session_dialogue.json'),
+  ]);
+  DATA.todaySession = todaySession;
+  DATA.classSample = classSample;
+  DATA.curriculumSample = curriculumSample;
+  DATA.checkpointReport = checkpointReport;
+  DATA.sessionDialogue = sessionDialogue;
+}
+
+async function loadFromFirebase() {
+  // Fetch current_session via Firestore REST, local files via server (server injects Firebase data)
+  const [currentSession, classSample, curriculumSample, checkpointReport, sessionDialogue] = await Promise.all([
+    fsGet(`/schools/${FS_SCHOOL}/meta/current_session`),
+    fetchJson(BASE + 'class_sample.json'),
+    fetchJson(BASE + 'curriculum_sample.json'),
+    fetchJson(BASE + 'checkpoint_report_cp2.json'),
+    fetchJson(BASE + 'simulated_session_dialogue.json'),
+  ]);
+
+  console.log('[Miko] Firestore current_session:', currentSession);
+
+  DATA.classSample      = classSample;
+  DATA.curriculumSample = curriculumSample;
+  DATA.checkpointReport = checkpointReport;
+  DATA.sessionDialogue  = sessionDialogue;
+
+  if (currentSession && currentSession.subject) {
+    // Firebase has a confirmed plan — merge with server-injected today_session for student statuses
+    const serverSession = await fetchJson(BASE + 'today_session.json').catch(() => null);
+    DATA.todaySession = {
+      ...serverSession,
+      subject:  currentSession.subject,
+      chapter:  currentSession.chapter  || (serverSession && serverSession.chapter) || '',
+      color:    currentSession.color    || '',
+      class:    currentSession.class    || (serverSession && serverSession.grade),
+      mode:     currentSession.mode     || '',
+      planId:   currentSession.planId   || '',
+      status:   currentSession.status   || 'active',
+      students: Array.isArray(currentSession.students) && currentSession.students.length > 0
+                  ? currentSession.students
+                  : (serverSession && serverSession.students) || [],
+    };
+  } else {
+    // No confirmed plan yet — use server-injected mock (server pulls from Firebase too)
+    console.log('[Miko] No current_session in Firestore — using server JSON');
+    DATA.todaySession = await fetchJson(BASE + 'today_session.json');
+  }
+}
+
+// ─── Load all data ───────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    await loadFromFirebase();
+    setIndicator('firebase');
+  } catch (err) {
+    console.warn('[Miko] Firestore REST failed, using local data:', err.message);
+    try {
+      await loadAllLocal();
+      setIndicator('local');
+    } catch (localErr) {
+      console.error('[Miko] Local load also failed:', localErr);
+      setIndicator('local');
+    }
+  }
+  DATA.lastUpdated = new Date();
+}
+
+// ─── TAB SYSTEM ──────────────────────────────────────────────────────────────
+window.switchTab = function(tabId) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabId);
+  });
+  const panel = document.getElementById('tab-' + tabId);
+  if (panel) panel.classList.add('active');
+};
+
+// ─── UTILITIES ───────────────────────────────────────────────────────────────
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function fmtTime(seconds) {
+  if (!seconds || seconds <= 0) return '';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return dateStr; }
+}
+
+function avatarColor(name, providedColor) {
+  if (providedColor) return providedColor;
+  const COLORS = ['#E85D55','#4A3FB7','#1D9E75','#EF9F27','#7c3aed','#2563eb','#059669','#d97706'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return COLORS[Math.abs(hash) % COLORS.length];
+}
+
+function subjectColor(subj) {
+  const m = { mathematics: '#d97706', math: '#d97706', science: '#059669', language: '#2563eb', 'social studies': '#7c3aed', social: '#7c3aed' };
+  return m[(subj || '').toLowerCase()] || '#6b7280';
+}
+
+function subjectAbbr(subj) {
+  const m = { mathematics: 'Mth', science: 'Sci', language: 'Lan', 'social studies': 'Soc' };
+  return m[(subj || '').toLowerCase()] || subj.slice(0, 3);
+}
+
+function levelBadgeClass(level) {
+  const l = (level || '').toString().toLowerCase();
+  if (l === 'l1' || l === '1') return 'badge-level-l1';
+  if (l === 'l2' || l === '2') return 'badge-level-l2';
+  if (l === 'l3' || l === '3') return 'badge-level-l3';
+  if (l === 'l4' || l === '4') return 'badge-level-l4';
+  return 'badge-level-l1';
+}
+
+function levelLabel(level) {
+  const l = parseInt(level) || level;
+  return 'L' + l;
+}
+
+function statusLabel(status) {
+  const m = { done: 'Done', in_progress: 'In Progress', pending: 'Pending', absent: 'Absent' };
+  return m[status] || status;
+}
+
+// safe HTML
+function esc(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── RENDER: TODAY ───────────────────────────────────────────────────────────
+function renderToday() {
+  const container = document.getElementById('today-content');
+  const session = DATA.todaySession;
+
+  if (!session) {
+    container.innerHTML = `
+      <div class="no-session">
+        <div class="icon">📋</div>
+        <p>No session confirmed yet — open the Planner</p>
+      </div>`;
+    return;
+  }
+
+  const students = session.students || [];
+  const counts = { done: 0, in_progress: 0, pending: 0, absent: 0 };
+  students.forEach(s => { if (counts[s.status] !== undefined) counts[s.status]++; else counts.pending++; });
+
+  const color = session.color || subjectColor(session.subject);
+  const sessionDate = session.date ? fmtDate(session.date) : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  const classNum = session.class || session.grade || '';
+  const chapter = session.chapter || '';
+  const mode = session.mode || '';
+
+  // sort: in_progress first, then done, pending, absent
+  const statusOrder = { in_progress: 0, pending: 1, done: 2, absent: 3 };
+  const sorted = [...students].sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
+
+  const studentCards = sorted.map(s => {
+    const timeStr = fmtTime(s.time_spent_seconds);
+    const lvl = s.level || '';
+    const statusCls = `badge-${s.status}`;
+    const bg = avatarColor(s.name, null);
+    return `
+      <div class="student-card" onclick="window._openSession('${esc(s.id)}')" tabindex="0" role="button" aria-label="Start session with ${esc(s.name)}">
+        <div class="avatar" style="background:${esc(bg)}">${esc(initials(s.name))}</div>
+        <div class="student-info">
+          <div class="student-name">${esc(s.name)}</div>
+          ${s.last_question ? `<div class="student-last-q">"${esc(s.last_question)}"</div>` : ''}
+        </div>
+        <div class="student-badges">
+          ${lvl ? `<span class="badge ${levelBadgeClass(lvl)}">${esc(lvl)}</span>` : ''}
+          <span class="badge ${statusCls}">${esc(statusLabel(s.status))}</span>
+          ${timeStr ? `<span class="time-spent">${esc(timeStr)}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  const lastUpdStr = DATA.lastUpdated ? DATA.lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+
+  container.innerHTML = `
+    <div class="session-banner" style="background:${esc(color)}">
+      <div class="banner-subject">${esc(session.subject || 'Session')}</div>
+      ${chapter ? `<div class="banner-chapter">${esc(chapter)}</div>` : ''}
+      <div class="banner-meta">
+        ${sessionDate ? `<span class="banner-chip">${esc(sessionDate)}</span>` : ''}
+        ${classNum ? `<span class="banner-chip">Class ${esc(classNum)}</span>` : ''}
+        ${mode ? `<span class="banner-chip">${esc(mode)}</span>` : ''}
+        <span class="banner-chip">${esc(students.length)} students</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-pill stat-done">
+        <div class="num">${counts.done}</div>
+        <div class="lbl">Done</div>
+      </div>
+      <div class="stat-pill stat-progress">
+        <div class="num">${counts.in_progress}</div>
+        <div class="lbl">In Progress</div>
+      </div>
+      <div class="stat-pill stat-pending">
+        <div class="num">${counts.pending}</div>
+        <div class="lbl">Pending</div>
+      </div>
+      <div class="stat-pill stat-absent">
+        <div class="num">${counts.absent}</div>
+        <div class="lbl">Absent</div>
+      </div>
+    </div>
+    <div class="refresh-row">
+      <span class="last-updated">${lastUpdStr ? 'Updated ' + lastUpdStr : ''}</span>
+      <button class="refresh-btn" id="refresh-btn" onclick="window._refreshToday()">
+        <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+    <div class="student-list">${studentCards || '<div class="empty">No students in this session.</div>'}</div>
+  `;
+}
+
+window._refreshToday = async function() {
+  const icon = document.getElementById('refresh-icon');
+  if (icon) icon.classList.add('spinning');
+  const btn = document.getElementById('refresh-btn');
+  if (btn) btn.disabled = true;
+
+  await loadData();
+  renderToday();
+
+  if (icon) icon.classList.remove('spinning');
+  if (btn) btn.disabled = false;
+};
+
+// ─── RENDER: CLASS ────────────────────────────────────────────────────────────
+function renderClass() {
+  const container = document.getElementById('class-content');
+  const cls = DATA.classSample;
+  if (!cls) {
+    container.innerHTML = '<div class="empty">Class data not available.</div>';
+    return;
+  }
+
+  const students = cls.students || [];
+  const subjects = ['Mathematics', 'Science', 'Language', 'Social Studies'];
+
+  const cards = students.map(s => {
+    const bg = s.avatar_color || avatarColor(s.name, null);
+    const hasFlag = s.flagged_concepts && s.flagged_concepts.length > 0;
+    const pips = subjects.map(subj => {
+      const lvl = s.current_levels?.[subj] || 0;
+      const abbr = subjectAbbr(subj);
+      const pipHtml = [1,2,3,4].map(i => `<div class="pip ${i <= lvl ? 'filled-' + i : ''}"></div>`).join('');
+      return `<div class="level-row"><span class="subj-abbr">${esc(abbr)}</span><div class="level-pips">${pipHtml}</div></div>`;
+    }).join('');
+
+    return `
+      <div class="class-card" onclick="window._openDetail('${esc(s.id)}')" tabindex="0" role="button" aria-label="View ${esc(s.name)}">
+        ${hasFlag ? '<div class="flag-icon" title="Flagged concept">⚑</div>' : ''}
+        <div class="card-top">
+          <div class="avatar" style="background:${esc(bg)};width:38px;height:38px;font-size:13px;">${esc(initials(s.name))}</div>
+          <div>
+            <div class="student-name">${esc(s.name)}</div>
+            <div class="roll">Roll ${esc(s.roll_no)}</div>
+          </div>
+        </div>
+        <div class="level-bars">${pips}</div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="section-title">Class ${esc(cls.grade)}-${esc(cls.section)}</div>
+    <div class="section-sub">${esc(students.length)} Students</div>
+    <div class="class-grid">${cards}</div>
+  `;
+}
+
+// ─── RENDER: STUDENT DETAIL ───────────────────────────────────────────────────
+window._openDetail = function(studentId) {
+  const cls = DATA.classSample;
+  if (!cls) return;
+  const student = cls.students.find(s => s.id === studentId);
+  if (!student) return;
+
+  const bg = student.avatar_color || avatarColor(student.name, null);
+  const subjects = ['Mathematics', 'Science', 'Language', 'Social Studies'];
+
+  const levelCells = subjects.map(subj => {
+    const lvl = student.current_levels?.[subj] || 1;
+    const label = 'L' + lvl;
+    return `
+      <div class="level-cell">
+        <span class="subj-name">${esc(subj)}</span>
+        <span class="badge ${levelBadgeClass(String(lvl))}">${esc(label)}</span>
+      </div>`;
+  }).join('');
+
+  const flags = (student.flagged_concepts || []).map(fc => `
+    <div class="flag-card">
+      <div class="flag-subj">⚑ ${esc(fc.subject)}</div>
+      <div class="flag-concept">${esc(fc.concept)}</div>
+      <div class="flag-note">${esc(fc.note)}</div>
+    </div>`).join('');
+
+  const sessions = (student.recent_sessions || []).map(sess => `
+    <div class="session-item">
+      <div class="sess-date">${esc(fmtDate(sess.date))}</div>
+      <div class="sess-info">
+        <div class="sess-subj">${esc(sess.subject)}</div>
+        <div class="sess-concept">${esc(sess.concept)}</div>
+        <div class="sess-outcome">${esc(sess.outcome)}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-student-top">
+      <div class="avatar detail-avatar" style="background:${esc(bg)}">${esc(initials(student.name))}</div>
+      <div>
+        <div class="detail-student-name">${esc(student.name)}</div>
+        <div class="detail-roll">Roll No. ${esc(student.roll_no)}</div>
+      </div>
+    </div>
+
+    <div class="detail-section-title">Current Levels</div>
+    <div class="level-grid">${levelCells}</div>
+
+    ${flags ? `<div class="detail-section-title">Flagged Concepts</div>${flags}` : ''}
+
+    <div class="detail-section-title">Recent Sessions</div>
+    ${sessions || '<div class="empty" style="padding:16px 0;text-align:left;font-size:13px;color:var(--ink3)">No recent sessions recorded.</div>'}
+  `;
+
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeDetail = function() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+// keyboard close
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('session-overlay').classList.contains('open')) { closeSession(); return; }
+    window.closeDetail();
+  }
+});
+
+// ─── SESSION DIALOGUE ENGINE ─────────────────────────────────────────────────
+
+const SESSION_STATE = {
+  steps: [],
+  index: 0,
+  studentId: null,
+  autoTimer: null,
+};
+
+// Visual aid SVG renderers
+function renderVisualAid(aid) {
+  if (!aid) return '';
+  if (aid === 'chocolate_4_2') return `
+    <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px">
+      <rect x="10" y="20" width="260" height="60" rx="8" fill="#7B3F00" opacity=".15" stroke="#7B3F00" stroke-width="1.5"/>
+      ${[0,1,2,3].map(i => `
+        <rect x="${10 + i*65}" y="20" width="60" height="60" rx="${i===0?'8 0 0 8':i===3?'0 8 8 0':'0'}" fill="${i<2?'#6B2900':'#D4A574'}" stroke="#fff" stroke-width="2"/>
+        ${i<2 ? `<text x="${10+i*65+30}" y="57" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.7)">🍫</text>` : ''}
+      `).join('')}
+      <text x="140" y="100" text-anchor="middle" font-size="13" fill="rgba(255,255,255,.6)" font-family="sans-serif">2 out of 4 pieces eaten</text>
+    </svg>`;
+  if (aid === 'chocolate_4_3') return `
+    <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px">
+      <rect x="10" y="20" width="260" height="60" rx="8" fill="#7B3F00" opacity=".15" stroke="#7B3F00" stroke-width="1.5"/>
+      ${[0,1,2,3].map(i => `
+        <rect x="${10 + i*65}" y="20" width="60" height="60" rx="${i===0?'8 0 0 8':i===3?'0 8 8 0':'0'}" fill="${i<3?'#6B2900':'#D4A574'}" stroke="#fff" stroke-width="2"/>
+        ${i<3 ? `<text x="${10+i*65+30}" y="57" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.7)">🍫</text>` : ''}
+      `).join('')}
+      <text x="140" y="100" text-anchor="middle" font-size="13" fill="rgba(255,255,255,.6)" font-family="sans-serif">3 out of 4 pieces eaten</text>
+    </svg>`;
+  if (aid === 'star_burst') return `
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:160px">
+      ${[0,1,2,3,4,5,6,7].map(i => {
+        const a = (i * 45) * Math.PI / 180;
+        const x1 = 100 + Math.cos(a)*30, y1 = 100 + Math.sin(a)*30;
+        const x2 = 100 + Math.cos(a)*85, y2 = 100 + Math.sin(a)*85;
+        return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#EF9F27" stroke-width="3" stroke-linecap="round" opacity=".8"/>`;
+      }).join('')}
+      <circle cx="100" cy="100" r="28" fill="#EF9F27"/>
+      <text x="100" y="108" text-anchor="middle" font-size="28">⭐</text>
+    </svg>`;
+  return '';
+}
+
+function stageLabel(stage) {
+  if (stage === 'greeting') return 'Greeting';
+  if (stage === 'closing') return 'Closing';
+  if (stage.startsWith('question')) return 'Question';
+  if (stage.startsWith('follow_up')) return 'Follow Up';
+  if (stage.startsWith('evaluating')) return 'Evaluating';
+  return stage.replace(/_/g, ' ');
+}
+
+window._openSession = function(studentId) {
+  const session  = DATA.todaySession;
+  const dialogue = DATA.sessionDialogue;
+  if (!session || !dialogue) return;
+
+  const student = (session.students || []).find(s => s.id === studentId);
+  if (!student) return;
+
+  const color = session.color || subjectColor(session.subject);
+  const subject = session.subject || 'Session';
+  const chapter = session.chapter ? ` — ${session.chapter}` : '';
+
+  // Fill header
+  document.getElementById('so-name').textContent = student.name;
+  document.getElementById('so-meta').textContent = `Level ${student.level || 'L1'}  ·  ${student.status || 'Pending'}`;
+  const chip = document.getElementById('so-chip');
+  chip.textContent = subject;
+  chip.style.background = color;
+
+  // Personalise dialogue text for this student
+  const steps = dialogue.map(step => ({
+    ...step,
+    text: step.text.replace('Aarav', student.name.split(' ')[0]),
+  }));
+
+  SESSION_STATE.steps     = steps;
+  SESSION_STATE.index     = 0;
+  SESSION_STATE.studentId = studentId;
+
+  // Build progress dots
+  const prog = document.getElementById('so-progress');
+  prog.innerHTML = steps.map((_, i) => `<div class="so-dot" id="so-dot-${i}"></div>`).join('');
+
+  document.getElementById('session-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  renderSessionStep(0);
+};
+
+function renderSessionStep(idx) {
+  clearTimeout(SESSION_STATE.autoTimer);
+  SESSION_STATE.index = idx;
+
+  const steps = SESSION_STATE.steps;
+  const step  = steps[idx];
+
+  // Progress dots
+  steps.forEach((_, i) => {
+    const dot = document.getElementById('so-dot-' + i);
+    if (!dot) return;
+    dot.className = 'so-dot' + (i === idx ? ' active' : i < idx ? ' done' : '');
+  });
+
+  // Stage label
+  document.getElementById('so-stage-label').textContent = stageLabel(step.stage).toUpperCase();
+
+  // Text / thinking animation
+  const textEl = document.getElementById('so-text');
+  const isEval = step.stage.startsWith('evaluating');
+  if (isEval) {
+    textEl.innerHTML = `<div class="so-thinking"><span></span><span></span><span></span></div>`;
+  } else {
+    textEl.style.opacity = '0';
+    textEl.style.transform = 'translateY(6px)';
+    textEl.style.transition = 'none';
+    requestAnimationFrame(() => {
+      textEl.textContent = step.text;
+      requestAnimationFrame(() => {
+        textEl.style.transition = 'opacity .35s, transform .35s';
+        textEl.style.opacity = '1';
+        textEl.style.transform = 'translateY(0)';
+      });
+    });
+  }
+
+  // Visual aid
+  const slot = document.getElementById('so-visual-slot');
+  const aidHtml = renderVisualAid(step.visual_aid);
+  if (aidHtml) {
+    slot.innerHTML = aidHtml;
+    const img = slot.firstElementChild;
+    if (img) {
+      requestAnimationFrame(() => requestAnimationFrame(() => img.classList.add('show')));
+    }
+  } else {
+    slot.innerHTML = '';
+  }
+
+  // Level-up celebration
+  if (step.triggers_level_up) {
+    const lvl = document.getElementById('so-levelup');
+    const sub = document.getElementById('so-levelup-sub');
+    sub.textContent = `${SESSION_STATE.steps[idx - 1]?.stage || 'Great'} — moving to next level!`;
+    lvl.classList.add('show');
+    setTimeout(() => lvl.classList.remove('show'), 2200);
+  }
+
+  // Tap button
+  const btn  = document.getElementById('so-tap-btn');
+  const last = idx === steps.length - 1;
+
+  if (step.requires_tap || isEval || last) {
+    btn.disabled = false;
+    btn.textContent = last ? 'Finish session' : (isEval ? 'Continue' : 'Tap to respond');
+    if (isEval) {
+      // Auto-advance after duration
+      SESSION_STATE.autoTimer = setTimeout(() => sessionNext(), step.duration_ms || 1500);
+      btn.disabled = true;
+    }
+  } else {
+    btn.disabled = true;
+    btn.textContent = 'Playing…';
+    SESSION_STATE.autoTimer = setTimeout(() => sessionNext(), step.duration_ms || 3000);
+  }
+}
+
+window.sessionNext = function() {
+  clearTimeout(SESSION_STATE.autoTimer);
+  const { steps, index } = SESSION_STATE;
+  if (index >= steps.length - 1) { closeSession(); return; }
+  renderSessionStep(index + 1);
+};
+
+window.closeSession = function() {
+  clearTimeout(SESSION_STATE.autoTimer);
+  document.getElementById('session-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+// ─── RENDER: CURRICULUM ───────────────────────────────────────────────────────
+function renderCurriculum() {
+  const container = document.getElementById('curriculum-content');
+  const cur = DATA.curriculumSample;
+  if (!cur) {
+    container.innerHTML = '<div class="empty">Curriculum data not available.</div>';
+    return;
+  }
+
+  const concepts = [...(cur.concepts || [])].sort((a, b) => (a.level || 0) - (b.level || 0));
+  const color = subjectColor(cur.subject);
+
+  const cards = concepts.map((c, idx) => {
+    const lvl = c.level || 1;
+    const lvlLabel = 'L' + lvl;
+    const cardId = 'concept-' + idx;
+    return `
+      <div class="concept-card" id="${cardId}">
+        <div class="concept-top" onclick="window._toggleConcept('${cardId}')">
+          <span class="badge ${levelBadgeClass(String(lvl))}">${esc(lvlLabel)}</span>
+          <span class="concept-name">${esc(c.name)}</span>
+          <span class="expand-icon">▾</span>
+        </div>
+        <div class="concept-detail">
+          <div class="qa-block">
+            <div class="qa-label">Sample Question</div>
+            <div class="qa-text">${esc(c.sample_question)}</div>
+          </div>
+          <button class="answer-toggle" onclick="window._toggleAnswer('ans-${cardId}', this)">
+            ▶ Show Answer
+          </button>
+          <div class="answer-content" id="ans-${cardId}">
+            <div class="qa-block">
+              <div class="qa-label">Answer</div>
+              <div class="qa-text">${esc(c.sample_answer)}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="curriculum-header">
+      <div class="section-title" style="color:${esc(color)}">${esc(cur.subject)}</div>
+      <div class="section-sub">Chapter: ${esc(cur.chapter)} · ${esc(concepts.length)} Concepts</div>
+    </div>
+    ${cards}
+  `;
+}
+
+window._toggleConcept = function(id) {
+  document.getElementById(id)?.classList.toggle('expanded');
+};
+
+window._toggleAnswer = function(answerId, btn) {
+  const el = document.getElementById(answerId);
+  if (!el) return;
+  el.classList.toggle('revealed');
+  btn.textContent = el.classList.contains('revealed') ? '▼ Hide Answer' : '▶ Show Answer';
+};
+
+// ─── RENDER: REPORT ───────────────────────────────────────────────────────────
+function renderReport() {
+  const container = document.getElementById('report-content');
+  const report = DATA.checkpointReport;
+  if (!report) {
+    container.innerHTML = '<div class="empty">Report data not available.</div>';
+    return;
+  }
+
+  const subjects = ['Mathematics', 'Science', 'Language', 'Social Studies'];
+
+  const weaknessCards = (report.class_weaknesses || []).map(w => {
+    const pct = w.total > 0 ? Math.round((w.below_ideal / w.total) * 100) : 0;
+    const color = subjectColor(w.subject);
+    return `
+      <div class="weakness-card">
+        <div class="wc-subj" style="color:${esc(color)}">${esc(w.subject)}</div>
+        <div class="wc-status">${esc(w.status)}</div>
+        <div class="wc-bar-track">
+          <div class="wc-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="wc-nums">${esc(w.below_ideal)} / ${esc(w.total)} below ideal</div>
+      </div>`;
+  }).join('');
+
+  const tableRows = (report.student_profiles || []).map(sp => {
+    const statusKey = (sp.status || '').toLowerCase().replace(/\s+/g,'_');
+    const statusCls = statusKey === 'on_track' ? 'status-on_track' : statusKey === 'ahead' ? 'status-ahead' : 'status-behind';
+    const subjectCells = subjects.map(subj => {
+      const lvl = sp.levels?.[subj] || '—';
+      const lvlNum = lvl.replace('L','');
+      return `<td><span class="badge ${levelBadgeClass(lvl)}">${esc(lvl)}</span></td>`;
+    }).join('');
+    return `
+      <tr>
+        <td style="font-weight:600;color:var(--ink);white-space:nowrap">${esc(sp.name)}</td>
+        ${subjectCells}
+        <td><span class="status-badge-report ${statusCls}">${esc(sp.status)}</span></td>
+      </tr>`;
+  }).join('');
+
+  const subjectHeaders = subjects.map(s => `<th>${esc(s)}</th>`).join('');
+
+  const incompleteCards = (report.incomplete_assessments || []).map(ia => `
+    <div class="incomplete-card">
+      <div class="ic-name">${esc(ia.name)}</div>
+      <div class="ic-detail">${esc(ia.detail)}</div>
+    </div>`).join('');
+
+  container.innerHTML = `
+    <div class="report-top">
+      <div class="cp-badge">${esc(report.checkpoint)}</div>
+      <div class="report-meta">
+        <div class="rdate">Generated ${esc(fmtDate(report.generated_date))}</div>
+        <div class="rideal">Ideal path level: ${esc(report.ideal_path_level)}</div>
+      </div>
+    </div>
+
+    <div class="section-title">Class Weaknesses</div>
+    <div class="section-sub" style="margin-bottom:12px">Subjects with students below ideal level</div>
+    <div class="weakness-grid">${weaknessCards}</div>
+
+    <div class="section-title">Student Profiles</div>
+    <div class="section-sub" style="margin-bottom:12px">${esc((report.student_profiles || []).length)} students assessed</div>
+    <div class="report-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th>
+            ${subjectHeaders}
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+
+    ${incompleteCards ? `
+      <div class="section-title">Incomplete Assessments</div>
+      <div class="section-sub" style="margin-bottom:12px">Students with missing or partial data</div>
+      ${incompleteCards}
+    ` : ''}
+  `;
+}
+
+// ─── RENDER ALL ──────────────────────────────────────────────────────────────
+function renderAll() {
+  renderToday();
+  renderClass();
+  renderCurriculum();
+  renderReport();
+}
+
+// ─── AUTO REFRESH (30s for Today tab) ────────────────────────────────────────
+let autoRefreshTimer = null;
+
+function startAutoRefresh() {
+  clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(async () => {
+    // only refresh if Today tab is active
+    const todayPanel = document.getElementById('tab-today');
+    if (todayPanel && todayPanel.classList.contains('active')) {
+      await loadData();
+      renderToday();
+    }
+  }, 30000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(async function init() {
+  await loadData();
+  renderAll();
+  startAutoRefresh();
+})();
+</script>
+</body>
+</html>
