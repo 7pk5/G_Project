@@ -81,12 +81,12 @@ Open `http://localhost:8080/setup` in your browser and click **Seed 100 Students
 
 ## Firebase Configuration
 
-The server connects to a Firebase project. Config is in `server.py` (top of file):
+The server connects to a Firebase project. Config is set via environment variables (see `.env.example`):
 
-```python
-PROJECT_ID = 'gujrat-project-6653d'
-SCHOOL_ID  = 'demo-school'
-API_KEY    = 'AIzaSyC-0kK1L9wVTDSfiQmBVTw6Ul1_jAKqDKM'
+```
+FIREBASE_PROJECT_ID=your-project-id
+SCHOOL_ID=your-school-id
+FIREBASE_API_KEY=your-api-key
 ```
 
 The server fetches the current session from:
