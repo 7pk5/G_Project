@@ -1,0 +1,27 @@
+{
+  "rewrites": [
+    { "source": "/",          "destination": "/student/index.html" },
+    { "source": "/student",   "destination": "/student/index.html" },
+    { "source": "/setup",     "destination": "/setup.html" },
+    { "source": "/schedular", "destination": "/Schedular/assessment-planner-school.html" },
+    { "source": "/today",     "destination": "/student/today.html" },
+    { "source": "/app",       "destination": "/student/app.html" },
+    { "source": "/debug",     "destination": "/api/debug" }
+  ],
+  "headers": [
+    {
+      "source": "/student/miko-bridge-sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/" },
+        { "key": "Cache-Control",          "value": "no-store, no-cache, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/student/index.html",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy",  "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+      ]
+    }
+  ]
+}
