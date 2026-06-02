@@ -1012,10 +1012,7 @@ function renderStage() {
   document.getElementById('q-text').textContent     = isEval ? '' : text;
   document.getElementById('q-thinking').style.display = isEval ? 'flex' : 'none';
 
-  // Miko eyes animate when evaluating
-  const ring = document.getElementById('q-ring');
-  ring.style.animationDuration = isEval ? '0.6s' : '2s';
-  ring.style.borderColor = isEval ? 'rgba(251,191,36,.5)' : 'rgba(59,99,245,.4)';
+  // (Miko ring removed — now using light card layout)
 
   renderVisual(stg.visual_aid);
   renderSteps();
