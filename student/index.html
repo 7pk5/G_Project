@@ -869,14 +869,14 @@ async function init() {
   // 2. Server JSON fallback
   if (!session) {
     try {
-      session = await getJSON('assets/packages/shared_core/assets/mock/today_session.json');
+      session = await getJSON('/student/assets/packages/shared_core/assets/mock/today_session.json');
       console.log(`[Miko] Server JSON → ${session.subject} (${session.source || 'mock'})`);
     } catch (e) { console.warn('[Miko] Server JSON:', e.message); }
   }
 
   // 3. Dialogue
   try {
-    dialogue = await getJSON('assets/packages/shared_core/assets/mock/simulated_session_dialogue.json');
+    dialogue = await getJSON('/student/assets/packages/shared_core/assets/mock/simulated_session_dialogue.json');
   } catch (e) { console.warn('[Miko] Dialogue:', e.message); }
 
   if (!session || !dialogue) {
@@ -1039,7 +1039,7 @@ function renderStage() {
   btn.disabled    = !stg.requires_tap;
   btn.textContent = stg.requires_tap ? 'Tap when student answers' : 'Please wait…';
 
-  if (stg.audio_file) playAudio('assets/assets/audio/' + stg.audio_file);
+  if (stg.audio_file) playAudio('/student/assets/assets/audio/' + stg.audio_file);
   else S.audio.pause();
 
   if (!stg.requires_tap && stg.duration_ms) {
