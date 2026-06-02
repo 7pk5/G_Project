@@ -891,7 +891,9 @@ function go(){
   window._currentPlan = {
     selClass, schoolDays, mode, stu,
     subjWks, cp1Date, totalWks, fits,
-    subjs, cpWindowMode
+    subjs, cpWindowMode,
+    // Daily distribution params — used by student app to show correct students per day
+    perDay, actDays, wkCap, sessionMin
   };
 }
 
@@ -1059,6 +1061,8 @@ window.confirmPlan = async function() {
     // 2 — Single batch write everything
     const batch = writeBatch(db);
 
+    const planStart = plan.subjWks[0]?.weeks[0]?.start?.toISOString().split('T')[0] || today;
+
     batch.set(doc(db, 'schools', SCHOOL_ID, 'plan', weekId), {
       confirmedAt:  serverTimestamp(),
       class:        plan.selClass,
@@ -1068,7 +1072,13 @@ window.confirmPlan = async function() {
       totalWeeks:   plan.totalWks,
       cpWindow:     plan.cpWindowMode,
       fits:         plan.fits,
-      subjects:     plan.subjs.map(s => ({ id: s.id, name: s.n, color: s.h }))
+      subjects:     plan.subjs.map(s => ({ id: s.id, name: s.n, color: s.h })),
+      // Daily distribution formula params
+      perDay:       plan.perDay,
+      actDays:      plan.actDays,
+      wkCap:        plan.wkCap,
+      sessionMin:   plan.sessionMin,
+      planStart:    planStart
     });
 
     // current_session — student app reads this immediately
@@ -1083,7 +1093,13 @@ window.confirmPlan = async function() {
       students:     students,
       status:       'active',
       planId:       weekId,
-      confirmedAt:  serverTimestamp()
+      confirmedAt:  serverTimestamp(),
+      // Daily distribution formula — server uses these to slice students per day
+      perDay:       plan.perDay,
+      actDays:      plan.actDays,
+      wkCap:        plan.wkCap,
+      sessionMin:   plan.sessionMin,
+      planStart:    planStart
     });
 
     let sessionCount = 0;

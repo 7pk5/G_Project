@@ -3,1151 +3,578 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Miko — Teacher Dashboard</title>
+<title>Miko — Teacher App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #f7f6f2;
-    --surface: #ffffff;
-    --border: #e9e7df;
-    --ink: #111110;
-    --ink2: #4a4844;
-    --ink3: #7a7670;
-    --ok: #16a34a;
-    --ok-bg: #f0fdf4;
-    --warn: #b45309;
-    --warn-bg: #fffbeb;
-    --bad: #dc2626;
-    --bad-bg: #fef2f2;
-    --blue: #2563eb;
-    --blue-bg: #eff6ff;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 8px rgba(0,0,0,.04);
-    --nav-h: 60px;
-    --font: 'Inter', system-ui, sans-serif;
-    --font-display: 'Playfair Display', Georgia, serif;
-  }
-
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--font);
-    font-size: 16px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* ─── NAV ─── */
-  #nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: var(--nav-h);
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    gap: 4px;
-    z-index: 100;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  #nav::-webkit-scrollbar { display: none; }
-
-  .nav-brand {
-    font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--ink);
-    letter-spacing: -0.3px;
-    margin-right: 8px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .nav-sep {
-    width: 1px;
-    height: 24px;
-    background: var(--border);
-    margin: 0 4px;
-    flex-shrink: 0;
-  }
-
-  .nav-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--ink3);
-    font-family: var(--font);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-    min-height: 44px;
-    transition: background .15s, color .15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .nav-btn:hover { background: var(--bg); color: var(--ink2); }
-  .nav-btn.active { background: var(--blue-bg); color: var(--blue); }
-
-  .nav-spacer { flex: 1; }
-
-  #data-indicator {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 6px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: all .3s;
-  }
-
-  #data-indicator.firebase { color: var(--ok); border-color: #bbf7d0; background: var(--ok-bg); }
-  #data-indicator.local { color: var(--warn); border-color: #fde68a; background: var(--warn-bg); }
-  #data-indicator.loading { color: var(--ink3); }
-
-  #data-indicator .dot { font-size: 10px; }
-
-  /* ─── MAIN CONTENT ─── */
-  #app {
-    padding-top: var(--nav-h);
-    min-height: 100vh;
-  }
-
-  .tab-panel {
-    display: none;
-    animation: fadeIn .2s ease;
-    padding: 24px 16px;
-    max-width: 960px;
-    margin: 0 auto;
-  }
-
-  .tab-panel.active { display: block; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ─── SKELETON ─── */
-  .skeleton {
-    background: linear-gradient(90deg, #ede9e1 25%, #f5f3ee 50%, #ede9e1 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-    border-radius: var(--radius-sm);
-  }
-
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  .skel-block { display: block; }
-
-  /* ─── SECTION HEADING ─── */
-  .section-title {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 4px;
-  }
-
-  .section-sub {
-    font-size: 13px;
-    color: var(--ink3);
-    margin-bottom: 20px;
-  }
-
-  /* ─── TODAY TAB ─── */
-  .session-banner {
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .session-banner::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
-    pointer-events: none;
-  }
-
-  .banner-subject {
-    font-family: var(--font-display);
-    font-size: 26px;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.2;
-  }
-
-  .banner-chapter {
-    font-size: 15px;
-    color: rgba(255,255,255,.85);
-    margin-top: 2px;
-  }
-
-  .banner-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-  }
-
-  .banner-chip {
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(255,255,255,.9);
-    background: rgba(255,255,255,.2);
-    padding: 4px 10px;
-    border-radius: 20px;
-    backdrop-filter: blur(4px);
-  }
-
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
-  .stat-pill {
-    border-radius: var(--radius);
-    padding: 14px 12px;
-    text-align: center;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    box-shadow: var(--shadow);
-  }
-
-  .stat-pill .num {
-    font-family: var(--font-display);
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .stat-pill .lbl {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    margin-top: 4px;
-  }
-
-  .stat-done .num { color: var(--ok); }
-  .stat-done .lbl { color: var(--ok); }
-  .stat-progress .num { color: var(--blue); }
-  .stat-progress .lbl { color: var(--blue); }
-  .stat-pending .num { color: var(--ink3); }
-  .stat-pending .lbl { color: var(--ink3); }
-  .stat-absent .num { color: var(--bad); }
-  .stat-absent .lbl { color: var(--bad); }
-
-  .student-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .student-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    box-shadow: var(--shadow);
-    transition: box-shadow .15s;
-    cursor: default;
-  }
-
-  .student-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,.09); }
-
-  .avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    font-weight: 700;
-    color: #fff;
-    flex-shrink: 0;
-    letter-spacing: -.3px;
-  }
-
-  .student-info { flex: 1; min-width: 0; }
-
-  .student-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .student-last-q {
-    font-size: 13px;
-    color: var(--ink3);
-    font-style: italic;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 2px;
-  }
-
-  .student-badges {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 20px;
-    letter-spacing: .3px;
-    text-transform: uppercase;
-  }
-
-  .badge-level-l1 { background: #f3f4f6; color: #6b7280; }
-  .badge-level-l2 { background: var(--blue-bg); color: var(--blue); }
-  .badge-level-l3 { background: #fffbeb; color: #d97706; }
-  .badge-level-l4 { background: var(--ok-bg); color: var(--ok); }
-
-  .badge-done { background: var(--ok-bg); color: var(--ok); }
-  .badge-in_progress { background: var(--blue-bg); color: var(--blue); }
-  .badge-pending { background: #f3f4f6; color: #6b7280; }
-  .badge-absent { background: var(--bad-bg); color: var(--bad); }
-
-  .time-spent {
-    font-size: 12px;
-    color: var(--ink3);
-    font-weight: 500;
-    white-space: nowrap;
-  }
-
-  .no-session {
-    background: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 48px 24px;
-    text-align: center;
-  }
-
-  .no-session .icon { font-size: 36px; margin-bottom: 12px; }
-
-  .no-session p {
-    color: var(--ink3);
-    font-size: 15px;
-  }
-
-  /* ─── CLASS TAB ─── */
-  .class-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  @media (min-width: 700px) {
-    .class-grid { grid-template-columns: repeat(3, 1fr); }
-  }
-
-  .class-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    cursor: pointer;
-    transition: box-shadow .15s, transform .1s;
-    box-shadow: var(--shadow);
-    -webkit-tap-highlight-color: transparent;
-    position: relative;
-  }
-
-  .class-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-1px); }
-  .class-card:active { transform: translateY(0); }
-
-  .class-card .card-top {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .class-card .student-name { font-size: 14px; }
-  .class-card .roll { font-size: 12px; color: var(--ink3); margin-top: 1px; }
-
-  .level-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .level-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .level-row .subj-abbr {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--ink3);
-    width: 26px;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-  }
-
-  .level-pips {
-    display: flex;
-    gap: 3px;
-  }
-
-  .pip {
-    width: 14px;
-    height: 8px;
-    border-radius: 3px;
-    background: #e5e7eb;
-  }
-
-  .pip.filled-1 { background: #9ca3af; }
-  .pip.filled-2 { background: var(--blue); }
-  .pip.filled-3 { background: #d97706; }
-  .pip.filled-4 { background: var(--ok); }
-
-  .flag-icon {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    font-size: 14px;
-    line-height: 1;
-  }
-
-  /* ─── STUDENT DETAIL PANEL ─── */
-  #detail-panel {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    display: flex;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .2s;
-  }
-
-  #detail-panel.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  #detail-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,.35);
-    backdrop-filter: blur(2px);
-  }
-
-  #detail-sheet {
-    position: absolute;
-    top: 0; right: 0; bottom: 0;
-    width: min(480px, 100vw);
-    background: var(--bg);
-    overflow-y: auto;
-    transform: translateX(100%);
-    transition: transform .25s cubic-bezier(.4,0,.2,1);
-    padding-bottom: 40px;
-  }
-
-  #detail-panel.open #detail-sheet {
-    transform: translateX(0);
-  }
-
-  .detail-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    border: none;
-    background: none;
-    font-family: var(--font);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--blue);
-    cursor: pointer;
-    padding: 8px 0;
-    min-height: 44px;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .back-btn svg { width: 18px; height: 18px; }
-
-  .detail-body { padding: 20px; }
-
-  .detail-student-top {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
-  .detail-avatar { width: 64px; height: 64px; font-size: 22px; }
-
-  .detail-student-name {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--ink);
-  }
-
-  .detail-roll { font-size: 14px; color: var(--ink3); margin-top: 2px; }
-
-  .detail-section-title {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .8px;
-    color: var(--ink3);
-    margin-bottom: 10px;
-    margin-top: 20px;
-  }
-
-  .level-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 4px;
-  }
-
-  .level-cell {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .level-cell .subj-name { font-size: 13px; font-weight: 500; color: var(--ink2); }
-
-  .flag-card {
-    background: var(--warn-bg);
-    border: 1px solid #fde68a;
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    margin-bottom: 8px;
-  }
-
-  .flag-card .flag-subj { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--warn); margin-bottom: 4px; }
-  .flag-card .flag-concept { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
-  .flag-card .flag-note { font-size: 13px; color: var(--ink2); }
-
-  .session-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .session-item .sess-date { font-size: 12px; color: var(--ink3); font-weight: 500; white-space: nowrap; margin-top: 1px; }
-  .session-item .sess-info { flex: 1; min-width: 0; }
-  .session-item .sess-subj { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--ink3); margin-bottom: 2px; }
-  .session-item .sess-concept { font-size: 14px; font-weight: 500; color: var(--ink); }
-  .session-item .sess-outcome { font-size: 12px; color: var(--ink3); margin-top: 2px; font-style: italic; }
-
-  /* ─── CURRICULUM TAB ─── */
-  .curriculum-header {
-    margin-bottom: 20px;
-  }
-
-  .concept-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-bottom: 10px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-  }
-
-  .concept-top {
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    min-height: 56px;
-  }
-
-  .concept-top:hover { background: #fafaf8; }
-
-  .concept-name {
-    flex: 1;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--ink);
-  }
-
-  .expand-icon {
-    font-size: 18px;
-    color: var(--ink3);
-    transition: transform .2s;
-    flex-shrink: 0;
-  }
-
-  .concept-card.expanded .expand-icon { transform: rotate(180deg); }
-
-  .concept-detail {
-    display: none;
-    padding: 0 18px 16px;
-    border-top: 1px solid var(--border);
-  }
-
-  .concept-card.expanded .concept-detail { display: block; }
-
-  .qa-block { margin-top: 12px; }
-
-  .qa-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    color: var(--ink3);
-    margin-bottom: 6px;
-  }
-
-  .qa-text {
-    font-size: 14px;
-    color: var(--ink2);
-    line-height: 1.55;
-  }
-
-  .answer-toggle {
-    margin-top: 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--blue);
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: var(--font);
-    padding: 6px 0;
-    min-height: 44px;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .answer-content {
-    display: none;
-    margin-top: 4px;
-  }
-
-  .answer-content.revealed { display: block; }
-
-  /* ─── REPORT TAB ─── */
-  .report-top {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-  }
-
-  .cp-badge {
-    font-family: var(--font-display);
-    font-size: 36px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-  }
-
-  .report-meta { flex: 1; }
-  .report-meta .rdate { font-size: 13px; color: var(--ink3); }
-  .report-meta .rideal { font-size: 14px; font-weight: 600; color: var(--ink2); margin-top: 2px; }
-
-  .weakness-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-
-  @media (min-width: 600px) {
-    .weakness-grid { grid-template-columns: repeat(4, 1fr); }
-  }
-
-  .weakness-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 14px;
-    box-shadow: var(--shadow);
-  }
-
-  .weakness-card .wc-subj {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    margin-bottom: 6px;
-  }
-
-  .weakness-card .wc-status { font-size: 13px; color: var(--ink2); margin-bottom: 8px; line-height: 1.4; }
-
-  .wc-bar-track {
-    height: 6px;
-    background: var(--bg);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .wc-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: var(--bad);
-    transition: width .6s ease;
-  }
-
-  .wc-nums { font-size: 11px; color: var(--ink3); margin-top: 4px; }
-
-  .report-table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: auto;
-    box-shadow: var(--shadow);
-    margin-bottom: 24px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-
-  th {
-    background: #fafaf8;
-    padding: 10px 14px;
-    text-align: left;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--ink3);
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-
-  td {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    color: var(--ink2);
-    vertical-align: middle;
-  }
-
-  tr:last-child td { border-bottom: none; }
-
-  .status-badge-report {
-    display: inline-flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: .3px;
-    white-space: nowrap;
-  }
-
-  .status-ahead { background: var(--ok-bg); color: var(--ok); }
-  .status-on_track { background: var(--blue-bg); color: var(--blue); }
-  .status-behind { background: var(--bad-bg); color: var(--bad); }
-
-  .incomplete-card {
-    background: var(--bad-bg);
-    border: 1px solid #fecaca;
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    margin-bottom: 8px;
-  }
-
-  .incomplete-card .ic-name { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
-  .incomplete-card .ic-detail { font-size: 13px; color: var(--ink2); line-height: 1.5; }
-
-  /* ─── REFRESH INDICATOR ─── */
-  .refresh-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    min-height: 32px;
-  }
-
-  .refresh-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ink3);
-    padding: 6px 12px;
-    cursor: pointer;
-    min-height: 36px;
-    transition: background .15s, color .15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .refresh-btn:hover { background: var(--bg); color: var(--ink2); }
-
-  .refresh-btn svg { width: 14px; height: 14px; }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinning { animation: spin .8s linear infinite; }
-
-  .last-updated {
-    font-size: 12px;
-    color: var(--ink3);
-  }
-
-  /* ─── MATH subject color ─── */
-  .subj-math { color: #d97706; }
-  .subj-science { color: #059669; }
-  .subj-language { color: var(--blue); }
-  .subj-social { color: #7c3aed; }
-
-  /* ─── EMPTY STATE ─── */
-  .empty {
-    text-align: center;
-    padding: 32px;
-    color: var(--ink3);
-    font-size: 14px;
-  }
-
-  /* ─── SKELETON LOADERS ─── */
-  .skel-banner { height: 108px; border-radius: var(--radius); margin-bottom: 20px; }
-  .skel-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-  .skel-stat { height: 76px; border-radius: var(--radius); }
-  .skel-card { height: 72px; border-radius: var(--radius); margin-bottom: 8px; }
-  .skel-card-class { height: 120px; border-radius: var(--radius); }
-
-  /* ─── SCROLLBAR ─── */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-
-  @media (max-width: 480px) {
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .stat-pill .num { font-size: 24px; }
-    .tab-panel { padding: 16px 12px; }
-  }
-
-  /* ─── SESSION DIALOGUE OVERLAY ─── */
-  #session-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 300;
-    background: #0f0f0e;
-    display: flex;
-    flex-direction: column;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .25s;
-  }
-  #session-overlay.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .so-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255,255,255,.1);
-    background: rgba(255,255,255,.04);
-    flex-shrink: 0;
-  }
-  .so-close {
-    width: 36px; height: 36px;
-    border: none; background: rgba(255,255,255,.12);
-    border-radius: 50%; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 18px;
-    flex-shrink: 0;
-    transition: background .15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .so-close:hover { background: rgba(255,255,255,.22); }
-  .so-student-info { flex: 1; min-width: 0; }
-  .so-student-name { font-size: 16px; font-weight: 700; color: #fff; }
-  .so-student-meta { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 2px; }
-  .so-subject-chip {
-    padding: 5px 14px; border-radius: 99px;
-    font-size: 12px; font-weight: 600; color: #fff;
-    flex-shrink: 0;
-  }
-
-  .so-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 24px 24px 0;
-    overflow: hidden;
-    position: relative;
-  }
-
-  /* Visual aid area */
-  .so-visual {
-    flex: 1;
-    width: 100%;
-    max-width: 380px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  .visual-aid {
-    width: 100%;
-    max-width: 320px;
-    opacity: 0;
-    transform: scale(.9) translateY(8px);
-    transition: opacity .4s ease, transform .4s ease;
-  }
-  .visual-aid.show {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-
-  /* Chat bubble */
-  .so-bubble-wrap {
-    width: 100%;
-    max-width: 480px;
-    margin-bottom: 16px;
-  }
-
-  .so-bubble {
-    background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.14);
-    border-radius: 20px 20px 20px 6px;
-    padding: 20px 24px;
-    backdrop-filter: blur(8px);
-    position: relative;
-  }
-
-  .so-stage-label {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .9px;
-    color: rgba(255,255,255,.4);
-    margin-bottom: 8px;
-  }
-
-  .so-text {
-    font-size: 18px;
-    font-weight: 500;
-    color: #fff;
-    line-height: 1.5;
-    min-height: 54px;
-  }
-
-  .so-thinking {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    padding: 4px 0;
-  }
-  .so-thinking span {
-    width: 10px; height: 10px;
-    background: rgba(255,255,255,.5);
-    border-radius: 50%;
-    animation: thinkBounce 1.1s ease-in-out infinite;
-  }
-  .so-thinking span:nth-child(2) { animation-delay: .18s; }
-  .so-thinking span:nth-child(3) { animation-delay: .36s; }
-  @keyframes thinkBounce {
-    0%,80%,100% { transform: translateY(0); opacity: .5; }
-    40% { transform: translateY(-8px); opacity: 1; }
-  }
-
-  /* Footer: progress + tap button */
-  .so-footer {
-    width: 100%;
-    max-width: 480px;
-    padding: 16px 0 max(24px, env(safe-area-inset-bottom));
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    flex-shrink: 0;
-  }
-
-  .so-progress {
-    display: flex;
-    gap: 7px;
-    align-items: center;
-  }
-  .so-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.25);
-    transition: background .25s, width .25s;
-  }
-  .so-dot.active {
-    background: #fff;
-    width: 20px;
-    border-radius: 4px;
-  }
-  .so-dot.done {
-    background: rgba(255,255,255,.55);
-  }
-
-  .so-tap-btn {
-    width: 100%;
-    padding: 17px;
-    border-radius: 16px;
-    border: none;
-    font-family: var(--font);
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    background: #fff;
-    color: #111;
-    transition: transform .1s, background .15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .so-tap-btn:hover { background: #f0f0f0; }
-  .so-tap-btn:active { transform: scale(.97); }
-  .so-tap-btn:disabled {
-    background: rgba(255,255,255,.15);
-    color: rgba(255,255,255,.35);
-    cursor: default;
-  }
-
-  /* Level-up celebration */
-  .so-levelup {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(15,15,14,.85);
-    backdrop-filter: blur(4px);
-    z-index: 10;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .3s;
-  }
-  .so-levelup.show { opacity: 1; pointer-events: auto; }
-  .so-levelup-emoji { font-size: 64px; animation: popIn .4s cubic-bezier(.34,1.56,.64,1); }
-  .so-levelup-text { font-size: 28px; font-weight: 800; color: #fff; margin-top: 12px; }
-  .so-levelup-sub { font-size: 15px; color: rgba(255,255,255,.6); margin-top: 6px; }
-  @keyframes popIn {
-    0% { transform: scale(0); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-
-  /* Student card clickable */
-  .student-card { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .12s; }
-  .student-card:hover { background: #fafaf8; }
-  .student-card:active { background: #f0f0ee; }
+/* ── RESET & TOKENS ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f7f6f2;
+  --surface:#ffffff;
+  --border:#e9e7df;
+  --border2:#ccc9be;
+  --ink:#111110;
+  --ink2:#4a4844;
+  --ink3:#7a7670;
+  --ok:#16a34a;--ok-bg:#f0fdf4;--ok-b:#bbf7d0;
+  --warn:#b45309;--warn-bg:#fffbeb;--warn-b:#fde68a;
+  --bad:#dc2626;--bad-bg:#fef2f2;--bad-b:#fecaca;
+  --blue:#2563eb;--blue-bg:#eff6ff;
+  --exam:#9f1239;--exam-bg:#fff1f2;--exam-b:#fecdd3;
+  --c-math:#d97706;--c-sci:#059669;--c-lang:#2563eb;--c-soc:#7c3aed;
+  --radius:12px;--radius-sm:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 8px rgba(0,0,0,.04);
+  --nav-h:60px;
+  --font:'Inter',system-ui,sans-serif;
+  --font-display:'Playfair Display',Georgia,serif;
+}
+
+html,body{
+  height:100%;background:var(--bg);color:var(--ink);
+  font-family:var(--font);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+
+/* ── NAV ────────────────────────────────────────────────────── */
+#nav{
+  position:fixed;top:0;left:0;right:0;height:var(--nav-h);
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:4px;
+  z-index:100;overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+#nav::-webkit-scrollbar{display:none}
+
+.nav-brand{
+  font-family:var(--font-display);font-size:18px;font-weight:700;
+  color:var(--ink);letter-spacing:-0.3px;margin-right:8px;
+  white-space:nowrap;flex-shrink:0;
+}
+.nav-sep{width:1px;height:24px;background:var(--border);margin:0 4px;flex-shrink:0}
+
+.nav-btn{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;
+  border:none;border-radius:var(--radius-sm);background:transparent;
+  color:var(--ink3);font-family:var(--font);font-size:13px;font-weight:500;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;min-height:44px;
+  transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;
+}
+.nav-btn:hover{background:var(--bg);color:var(--ink2)}
+.nav-btn.active{background:var(--blue-bg);color:var(--blue)}
+.nav-spacer{flex:1}
+
+#data-indicator{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+  padding:6px 10px;border-radius:20px;border:1px solid var(--border);
+  white-space:nowrap;flex-shrink:0;transition:all .3s;
+}
+#data-indicator.firebase{color:var(--ok);border-color:#bbf7d0;background:var(--ok-bg)}
+#data-indicator.local{color:var(--warn);border-color:#fde68a;background:var(--warn-bg)}
+#data-indicator.loading{color:var(--ink3)}
+#data-indicator .dot{font-size:10px}
+
+/* ── MAIN CONTENT ───────────────────────────────────────────── */
+#app{padding-top:var(--nav-h);min-height:100vh}
+
+.tab-panel{
+  display:none;animation:fadeIn .2s ease;
+  padding:24px 16px;max-width:960px;margin:0 auto;
+}
+.tab-panel.active{display:block}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Planner tab — no padding, .page handles it */
+#tab-planner{padding:0;max-width:none;margin:0}
+
+/* ── SKELETON ───────────────────────────────────────────────── */
+.skeleton{
+  background:linear-gradient(90deg,#ede9e1 25%,#f5f3ee 50%,#ede9e1 75%);
+  background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--radius-sm);
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-block{display:block}
+.skel-banner{height:108px;border-radius:var(--radius);margin-bottom:20px}
+.skel-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.skel-stat{height:76px;border-radius:var(--radius)}
+.skel-card{height:72px;border-radius:var(--radius);margin-bottom:8px}
+.skel-card-class{height:120px;border-radius:var(--radius)}
+
+/* ── SECTION HEADINGS ───────────────────────────────────────── */
+.section-title{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.section-sub{font-size:13px;color:var(--ink3);margin-bottom:20px}
+
+/* ── TODAY TAB ──────────────────────────────────────────────── */
+.session-banner{border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;position:relative;overflow:hidden}
+.session-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 60%);pointer-events:none}
+.banner-subject{font-family:var(--font-display);font-size:26px;font-weight:700;color:#fff;line-height:1.2}
+.banner-chapter{font-size:15px;color:rgba(255,255,255,.85);margin-top:2px}
+.banner-meta{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.banner-chip{font-size:12px;font-weight:600;color:rgba(255,255,255,.9);background:rgba(255,255,255,.2);padding:4px 10px;border-radius:20px;backdrop-filter:blur(4px)}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat-pill{border-radius:var(--radius);padding:14px 12px;text-align:center;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow)}
+.stat-pill .num{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1}
+.stat-pill .lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.stat-done .num{color:var(--ok)}.stat-done .lbl{color:var(--ok)}
+.stat-progress .num{color:var(--blue)}.stat-progress .lbl{color:var(--blue)}
+.stat-pending .num{color:var(--ink3)}.stat-pending .lbl{color:var(--ink3)}
+.stat-absent .num{color:var(--bad)}.stat-absent .lbl{color:var(--bad)}
+
+.student-list{display:flex;flex-direction:column;gap:8px}
+.student-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .12s;
+}
+.student-card:hover{background:#fafaf8;box-shadow:0 3px 12px rgba(0,0,0,.09)}
+.student-card:active{background:#f0f0ee}
+
+.avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.3px}
+.student-info{flex:1;min-width:0}
+.student-name{font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.student-last-q{font-size:13px;color:var(--ink3);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.student-badges{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.3px;text-transform:uppercase}
+.badge-level-l1{background:#f3f4f6;color:#6b7280}
+.badge-level-l2{background:var(--blue-bg);color:var(--blue)}
+.badge-level-l3{background:#fffbeb;color:#d97706}
+.badge-level-l4{background:var(--ok-bg);color:var(--ok)}
+.badge-done{background:var(--ok-bg);color:var(--ok)}
+.badge-in_progress{background:var(--blue-bg);color:var(--blue)}
+.badge-pending{background:#f3f4f6;color:#6b7280}
+.badge-absent{background:var(--bad-bg);color:var(--bad)}
+.time-spent{font-size:12px;color:var(--ink3);font-weight:500;white-space:nowrap}
+.no-session{background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);padding:48px 24px;text-align:center}
+.no-session .icon{font-size:36px;margin-bottom:12px}
+.no-session p{color:var(--ink3);font-size:15px}
+
+.refresh-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;min-height:32px}
+.refresh-btn{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-family:var(--font);font-size:13px;font-weight:500;color:var(--ink3);padding:6px 12px;cursor:pointer;min-height:36px;transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent}
+.refresh-btn:hover{background:var(--bg);color:var(--ink2)}
+.refresh-btn svg{width:14px;height:14px}
+.last-updated{font-size:12px;color:var(--ink3)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{animation:spin .8s linear infinite}
+
+/* ── CLASS TAB ──────────────────────────────────────────────── */
+.class-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:700px){.class-grid{grid-template-columns:repeat(3,1fr)}}
+.class-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:box-shadow .15s,transform .1s;box-shadow:var(--shadow);-webkit-tap-highlight-color:transparent;position:relative}
+.class-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);transform:translateY(-1px)}
+.class-card:active{transform:translateY(0)}
+.class-card .card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.class-card .student-name{font-size:14px}
+.class-card .roll{font-size:12px;color:var(--ink3);margin-top:1px}
+.level-bars{display:flex;flex-direction:column;gap:5px}
+.level-row{display:flex;align-items:center;gap:6px}
+.level-row .subj-abbr{font-size:10px;font-weight:600;color:var(--ink3);width:26px;text-transform:uppercase;letter-spacing:.4px}
+.level-pips{display:flex;gap:3px}
+.pip{width:14px;height:8px;border-radius:3px;background:#e5e7eb}
+.pip.filled-1{background:#9ca3af}.pip.filled-2{background:var(--blue)}.pip.filled-3{background:#d97706}.pip.filled-4{background:var(--ok)}
+.flag-icon{position:absolute;top:12px;right:12px;font-size:14px;line-height:1}
+
+/* ── STUDENT DETAIL PANEL ───────────────────────────────────── */
+#detail-panel{position:fixed;inset:0;z-index:200;display:flex;pointer-events:none;opacity:0;transition:opacity .2s}
+#detail-panel.open{opacity:1;pointer-events:auto}
+#detail-overlay{position:absolute;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(2px)}
+#detail-sheet{position:absolute;top:0;right:0;bottom:0;width:min(480px,100vw);background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);padding-bottom:40px}
+#detail-panel.open #detail-sheet{transform:translateX(0)}
+.detail-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:14px}
+.back-btn{display:flex;align-items:center;gap:6px;border:none;background:none;font-family:var(--font);font-size:14px;font-weight:500;color:var(--blue);cursor:pointer;padding:8px 0;min-height:44px;-webkit-tap-highlight-color:transparent}
+.back-btn svg{width:18px;height:18px}
+.detail-body{padding:20px}
+.detail-student-top{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.detail-avatar{width:64px;height:64px;font-size:22px}
+.detail-student-name{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--ink)}
+.detail-roll{font-size:14px;color:var(--ink3);margin-top:2px}
+.detail-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin-bottom:10px;margin-top:20px}
+.level-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:4px}
+.level-cell{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.level-cell .subj-name{font-size:13px;font-weight:500;color:var(--ink2)}
+.flag-card{background:var(--warn-bg);border:1px solid #fde68a;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
+.flag-card .flag-subj{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--warn);margin-bottom:4px}
+.flag-card .flag-concept{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.flag-card .flag-note{font-size:13px;color:var(--ink2)}
+.session-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.session-item .sess-date{font-size:12px;color:var(--ink3);font-weight:500;white-space:nowrap;margin-top:1px}
+.session-item .sess-info{flex:1;min-width:0}
+.session-item .sess-subj{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:2px}
+.session-item .sess-concept{font-size:14px;font-weight:500;color:var(--ink)}
+.session-item .sess-outcome{font-size:12px;color:var(--ink3);margin-top:2px;font-style:italic}
+
+/* ── CURRICULUM TAB ─────────────────────────────────────────── */
+.curriculum-header{margin-bottom:20px}
+.concept-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow);overflow:hidden}
+.concept-top{padding:16px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:56px}
+.concept-top:hover{background:#fafaf8}
+.concept-name{flex:1;font-size:15px;font-weight:600;color:var(--ink)}
+.expand-icon{font-size:18px;color:var(--ink3);transition:transform .2s;flex-shrink:0}
+.concept-card.expanded .expand-icon{transform:rotate(180deg)}
+.concept-detail{display:none;padding:0 18px 16px;border-top:1px solid var(--border)}
+.concept-card.expanded .concept-detail{display:block}
+.qa-block{margin-top:12px}
+.qa-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);margin-bottom:6px}
+.qa-text{font-size:14px;color:var(--ink2);line-height:1.55}
+.answer-toggle{margin-top:8px;display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:500;color:var(--blue);cursor:pointer;border:none;background:none;font-family:var(--font);padding:6px 0;min-height:44px;-webkit-tap-highlight-color:transparent}
+.answer-content{display:none;margin-top:4px}
+.answer-content.revealed{display:block}
+
+/* ── REPORT TAB ─────────────────────────────────────────────── */
+.report-top{display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap}
+.cp-badge{font-family:var(--font-display);font-size:36px;font-weight:700;background:linear-gradient(135deg,#2563eb,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.report-meta{flex:1}
+.report-meta .rdate{font-size:13px;color:var(--ink3)}
+.report-meta .rideal{font-size:14px;font-weight:600;color:var(--ink2);margin-top:2px}
+.weakness-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px}
+@media(min-width:600px){.weakness-grid{grid-template-columns:repeat(4,1fr)}}
+.weakness-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.weakness-card .wc-subj{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.weakness-card .wc-status{font-size:13px;color:var(--ink2);margin-bottom:8px;line-height:1.4}
+.wc-bar-track{height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.wc-bar-fill{height:100%;border-radius:3px;background:var(--bad);transition:width .6s ease}
+.wc-nums{font-size:11px;color:var(--ink3);margin-top:4px}
+.report-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;box-shadow:var(--shadow);margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#fafaf8;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.status-badge-report{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.status-ahead{background:var(--ok-bg);color:var(--ok)}
+.status-on_track{background:var(--blue-bg);color:var(--blue)}
+.status-behind{background:var(--bad-bg);color:var(--bad)}
+.incomplete-card{background:var(--bad-bg);border:1px solid #fecaca;border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:8px}
+.incomplete-card .ic-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.incomplete-card .ic-detail{font-size:13px;color:var(--ink2);line-height:1.5}
+
+/* ── SESSION OVERLAY ────────────────────────────────────────── */
+#session-overlay{position:fixed;inset:0;z-index:300;background:#0f0f0e;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .25s}
+#session-overlay.open{opacity:1;pointer-events:auto}
+.so-header{display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);flex-shrink:0}
+.so-close{width:36px;height:36px;border:none;background:rgba(255,255,255,.12);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0;transition:background .15s}
+.so-close:hover{background:rgba(255,255,255,.22)}
+.so-student-info{flex:1;min-width:0}
+.so-student-name{font-size:16px;font-weight:700;color:#fff}
+.so-student-meta{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.so-subject-chip{padding:5px 14px;border-radius:99px;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.so-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:24px 24px 0;overflow:hidden;position:relative}
+.so-visual{flex:1;width:100%;max-width:380px;display:flex;align-items:center;justify-content:center;position:relative}
+.visual-aid{width:100%;max-width:320px;opacity:0;transform:scale(.9) translateY(8px);transition:opacity .4s ease,transform .4s ease}
+.visual-aid.show{opacity:1;transform:scale(1) translateY(0)}
+.so-bubble-wrap{width:100%;max-width:480px;margin-bottom:16px}
+.so-bubble{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px 20px 20px 6px;padding:20px 24px;backdrop-filter:blur(8px);position:relative}
+.so-stage-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:rgba(255,255,255,.4);margin-bottom:8px}
+.so-text{font-size:18px;font-weight:500;color:#fff;line-height:1.5;min-height:54px}
+.so-thinking{display:flex;gap:6px;align-items:center;padding:4px 0}
+.so-thinking span{width:10px;height:10px;background:rgba(255,255,255,.5);border-radius:50%;animation:thinkBounce 1.1s ease-in-out infinite}
+.so-thinking span:nth-child(2){animation-delay:.18s}
+.so-thinking span:nth-child(3){animation-delay:.36s}
+@keyframes thinkBounce{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-8px);opacity:1}}
+.so-footer{width:100%;max-width:480px;padding:16px 0 max(24px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:16px;flex-shrink:0}
+.so-progress{display:flex;gap:7px;align-items:center}
+.so-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.25);transition:background .25s,width .25s}
+.so-dot.active{background:#fff;width:20px;border-radius:4px}
+.so-dot.done{background:rgba(255,255,255,.55)}
+.so-tap-btn{width:100%;padding:17px;border-radius:16px;border:none;font-family:var(--font);font-size:16px;font-weight:700;cursor:pointer;background:#fff;color:#111;transition:transform .1s,background .15s;-webkit-tap-highlight-color:transparent}
+.so-tap-btn:hover{background:#f0f0f0}
+.so-tap-btn:active{transform:scale(.97)}
+.so-tap-btn:disabled{background:rgba(255,255,255,.15);color:rgba(255,255,255,.35);cursor:default}
+.so-levelup{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(15,15,14,.85);backdrop-filter:blur(4px);z-index:10;opacity:0;pointer-events:none;transition:opacity .3s}
+.so-levelup.show{opacity:1;pointer-events:auto}
+.so-levelup-emoji{font-size:64px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+.so-levelup-text{font-size:28px;font-weight:800;color:#fff;margin-top:12px}
+.so-levelup-sub{font-size:15px;color:rgba(255,255,255,.6);margin-top:6px}
+@keyframes popIn{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* ── MISC ───────────────────────────────────────────────────── */
+.empty{text-align:center;padding:32px;color:var(--ink3);font-size:14px}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+@media(max-width:480px){.stats-row{grid-template-columns:repeat(2,1fr)}.stat-pill .num{font-size:24px}.tab-panel{padding:16px 12px}}
+
+/* ═══════════════════════════════════════════════════════════
+   PLANNER TAB CSS (from Schedular)
+═══════════════════════════════════════════════════════════ */
+.page{max-width:960px;margin:0 auto;padding:24px 24px 80px;display:flex;flex-direction:column;gap:0}
+.step-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px;margin-top:32px}
+.step-wrap:first-child{margin-top:0}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-label{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em}
+
+.config-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 28px}
+.class-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.class-label{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+.class-groups{display:flex;flex-direction:column;gap:10px}
+.class-group-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cg-label{font-size:12px;color:var(--ink3);min-width:80px}
+.cg-btns{display:flex;gap:5px}
+.c-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);font-family:inherit;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.c-btn:hover{background:var(--border);color:var(--ink)}
+.c-btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.class-info-line{margin-top:14px;padding:10px 14px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--ink2);line-height:1.5;border:1px solid var(--border)}
+.class-info-line b{color:var(--ink);font-weight:600}
+.class-info-line .exam-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--exam-bg);color:var(--exam);border:1px solid var(--exam-b);margin-left:6px;vertical-align:middle}
+.controls-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.ctrl-field{display:flex;flex-direction:column;gap:7px}
+.ctrl-label{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em}
+.stp{display:flex;align-items:center;border:1px solid var(--border2);border-radius:8px;height:46px;overflow:hidden;background:var(--bg)}
+.stp-btn{width:44px;height:100%;background:none;border:none;font-size:17px;color:var(--ink2);cursor:pointer;font-family:inherit;transition:background .1s}
+.stp-btn:hover{background:var(--border)}
+.stp-inp{flex:1;text-align:center;font-family:var(--font-display);font-size:22px;font-weight:400;color:var(--ink);background:none;border:none;outline:none}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+.seg{display:flex;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:3px;gap:2px;height:46px}
+.seg-btn{flex:1;border:none;border-radius:6px;font-family:inherit;font-size:12px;font-weight:500;color:var(--ink2);background:none;cursor:pointer;transition:all .15s;white-space:nowrap}
+.seg-btn.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.09)}
+.emb-sub{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.sstp{display:flex;align-items:center;border:1px solid var(--border);border-radius:7px;height:38px;overflow:hidden;background:var(--bg)}
+.sstp-btn{width:34px;height:100%;background:none;border:none;font-size:13px;color:var(--ink2);cursor:pointer;font-family:inherit}
+.sstp-btn:hover{background:var(--border)}
+.sstp-inp{flex:1;text-align:center;font-size:14px;font-weight:500;color:var(--ink);background:none;border:none;outline:none}
+
+.verdict{border-radius:16px;padding:24px 28px;border:2px solid;transition:all .3s}
+.verdict.ok{background:var(--ok-bg);border-color:var(--ok-b)}
+.verdict.bad{background:var(--bad-bg);border-color:var(--bad-b)}
+.verdict.warn{background:var(--warn-bg);border-color:var(--warn-b)}
+.v-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.v-dot{width:8px;height:8px;border-radius:50%}
+.ok .v-tag{color:var(--ok)}.ok .v-dot{background:var(--ok)}
+.bad .v-tag{color:var(--bad)}.bad .v-dot{background:var(--bad)}
+.warn .v-tag{color:var(--warn)}.warn .v-dot{background:var(--warn)}
+.v-headline{font-family:var(--font-display);font-size:27px;font-weight:400;letter-spacing:-.01em;color:var(--ink);line-height:1.2;margin-bottom:10px}
+.v-body{font-size:14px;color:var(--ink2);line-height:1.7}
+.v-body strong{color:var(--ink);font-weight:600}
+.v-three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.vt{background:rgba(255,255,255,.7);border-radius:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.06)}
+.vt-n{font-family:var(--font-display);font-size:28px;font-weight:500;letter-spacing:-.02em;color:var(--ink);line-height:1;margin-bottom:3px}
+.vt-l{font-size:12px;color:var(--ink2)}
+.v-fixes{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.v-fix{padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;border-radius:8px;border:1px solid;cursor:pointer;transition:opacity .15s;background:rgba(255,255,255,.8)}
+.ok .v-fix{color:var(--ok);border-color:var(--ok-b)}
+.bad .v-fix{color:var(--bad);border-color:var(--bad-b)}
+.warn .v-fix{color:var(--warn);border-color:var(--warn-b)}
+
+.sched-wrap{display:flex;flex-direction:column;gap:10px}
+.subj-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.subj-card.spill{border-color:var(--warn-b);border-width:1.5px}
+.sc-hd{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.sc-hd.spill-hd{background:var(--warn-bg)}
+.sc-name{font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:9px}
+.sc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sc-meta{font-size:12px;color:var(--ink3)}
+.sc-meta.warn{color:var(--warn);font-weight:500}
+.week-block{border-bottom:1px solid var(--border)}
+.week-block:last-child{border-bottom:none}
+.week-block.spill-wk{background:var(--warn-bg)}
+.week-block.exam-wk{background:var(--exam-bg)}
+.day-row{display:grid;gap:0}
+.week-tag{padding:12px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px;background:var(--bg);min-width:96px}
+.week-block.spill-wk .week-tag{background:#fef3c7}
+.week-block.exam-wk .week-tag{background:var(--exam-bg)}
+.wt-label{font-size:12px;font-weight:600;color:var(--ink2)}
+.wt-date{font-size:10px;color:var(--ink3)}
+.wt-label.warn{color:var(--warn)}
+.day-col{padding:10px 8px;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.day-col:last-child{border-right:none}
+.day-col.buf-col{background:var(--bg);opacity:.45}
+.day-col.free-col{background:var(--bg);opacity:.3}
+.day-col.exam-col{background:var(--exam-bg)}
+.dn{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.day-pill{width:100%;border-radius:7px;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.dp-n{font-size:17px;font-weight:600;color:#fff;line-height:1}
+.dp-range{font-size:10px;color:rgba(255,255,255,.85)}
+.dp-min{font-size:9px;color:rgba(255,255,255,.7)}
+.buf-label{font-size:10px;color:var(--ink3);margin-top:4px;text-align:center;line-height:1.3}
+.exam-label-cell{font-size:10px;font-weight:600;color:var(--exam);margin-top:4px;text-align:center;line-height:1.3}
+.sc-footer{padding:11px 18px;display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-top:1px solid var(--border)}
+.sc-footer-detail{font-size:12px;color:var(--ink2)}
+.sc-footer-badge{font-size:12px;font-weight:600;padding:4px 12px;border-radius:99px;background:var(--ok-bg);color:var(--ok)}
+
+.extra-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.extra-panel-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.extra-panel-title{font-size:14px;font-weight:600;color:var(--ink)}
+.extra-panel-sub{font-size:12px;color:var(--ink3)}
+.extra-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.extra-opt{border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .15s;background:var(--bg)}
+.extra-opt:hover{border-color:var(--border2);background:var(--surface)}
+.extra-opt.on{border-color:var(--ok);background:var(--ok-bg)}
+.extra-opt-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.extra-opt-name{font-size:13px;font-weight:600;color:var(--ink)}
+.extra-opt-radio{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.extra-opt.on .extra-opt-radio{background:var(--ok);border-color:var(--ok)}
+.extra-opt-radio-dot{width:6px;height:6px;border-radius:50%;background:white;opacity:0}
+.extra-opt.on .extra-opt-radio-dot{opacity:1}
+.extra-opt-val{font-family:var(--font-display);font-size:26px;font-weight:500;letter-spacing:-.02em;color:var(--ink);line-height:1;margin-bottom:2px}
+.extra-opt-desc{font-size:11px;color:var(--ink3);line-height:1.5}
+.extra-opt.on .extra-opt-desc{color:var(--ok)}
+
+.cp-suggest{background:var(--warn-bg);border:1.5px solid var(--warn-b);border-radius:14px;padding:18px 22px}
+.cps-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.cps-icon{font-size:20px;flex-shrink:0}
+.cps-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.cps-body{font-size:13px;color:var(--ink2);line-height:1.6}
+.cps-body strong{color:var(--ink);font-weight:600}
+.subj-chip-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.subj-chip-label{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-right:4px}
+.subj-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1.5px solid var(--border2);background:var(--bg);cursor:pointer;font-size:12px;font-weight:500;color:var(--ink2);transition:all .15s;user-select:none}
+.subj-chip.on{color:var(--ink)}
+.subj-chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.subj-chip-x{font-size:12px;margin-left:2px;line-height:1}
+.subj-chip-hint{margin-left:auto;font-size:11px;color:var(--warn);font-weight:500}
+
+.cp-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+.cp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.cp-num{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:6px}
+.cp-wk{font-family:var(--font-display);font-size:28px;font-weight:500;letter-spacing:-.02em;color:var(--ink);line-height:1;margin-bottom:2px}
+.cp-date-real{font-size:13px;color:var(--ink2);margin-bottom:8px;font-weight:500}
+.cp-level{font-size:12px;color:var(--ink3);margin-bottom:10px;line-height:1.5}
+.cp-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px}
+.s-ok{background:var(--ok-bg);color:var(--ok)}
+.s-warn{background:var(--warn-bg);color:var(--warn)}
+.s-muted{background:var(--bg);color:var(--ink3)}
+
+.plan-card{background:var(--ink);border-radius:16px;padding:28px 32px;color:#fff}
+.plan-title{font-family:var(--font-display);font-size:24px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px;color:#fff}
+.plan-sub{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:22px}
+.plan-lines{display:flex;flex-direction:column;gap:0;border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;margin-bottom:22px}
+.plan-line{display:grid;grid-template-columns:36px 1fr auto;gap:12px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.07);align-items:center}
+.plan-line:last-child{border-bottom:none}
+.pl-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.pl-text{font-size:13px;color:rgba(255,255,255,.85);line-height:1.4}
+.pl-text b{color:#fff;font-weight:600}
+.pl-date{font-size:12px;color:rgba(255,255,255,.45);white-space:nowrap}
+.plan-actions{display:flex;gap:10px;flex-wrap:wrap}
+.plan-btn{padding:10px 22px;font-size:13px;font-weight:600;font-family:inherit;border-radius:9px;cursor:pointer;transition:all .15s;border:none}
+.plan-btn.primary{background:#fff;color:var(--ink)}
+.plan-btn.primary:hover{background:#f0ede6}
+.plan-btn.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)}
+.plan-btn.ghost:hover{background:rgba(255,255,255,.15)}
+.plan-btn.confirm{background:rgba(16,185,129,.12);color:#059669;border:1px solid rgba(16,185,129,.3)}
+.plan-btn.confirm:hover{background:rgba(16,185,129,.22)}
+.plan-btn.confirm:disabled{opacity:.5;cursor:not-allowed}
+
+#pv{display:none;position:fixed;inset:0;z-index:400;background:#fff;overflow:auto}
+.pi{max-width:800px;margin:0 auto;padding:52px 52px 80px;font-family:var(--font);color:#111}
+.pclose{position:fixed;top:18px;right:22px;padding:8px 16px;border-radius:8px;background:var(--ink);color:#fff;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+@media print{body>*:not(#pv){display:none!important}#pv{display:block!important;position:static}.pclose{display:none}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.u{animation:fadeUp .3s ease both}
+.u1{animation-delay:.05s}.u2{animation-delay:.1s}.u3{animation-delay:.15s}.u4{animation-delay:.2s}.u5{animation-delay:.25s}
 </style>
 </head>
 <body>
-
-<!-- NAV -->
+<!-- ── NAV ────────────────────────────────────────────────────── -->
 <nav id="nav">
   <span class="nav-brand">Miko</span>
   <span class="nav-sep"></span>
-  <button class="nav-btn active" data-tab="today" onclick="switchTab('today')">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    Today
-  </button>
-  <button class="nav-btn" data-tab="class" onclick="switchTab('class')">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Class
-  </button>
-  <button class="nav-btn" data-tab="curriculum" onclick="switchTab('curriculum')">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-    Curriculum
-  </button>
-  <button class="nav-btn" data-tab="report" onclick="switchTab('report')">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    Report
+  <button class="nav-btn active" data-tab="planner" onclick="switchTab('planner')">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Planner
   </button>
   <span class="nav-spacer"></span>
   <div id="data-indicator" class="loading">
     <span class="dot">○</span>
-    <span id="data-indicator-text">Loading...</span>
+    <span id="data-indicator-text">Loading…</span>
   </div>
 </nav>
 
-<!-- APP -->
+<!-- ── APP ───────────────────────────────────────────────────── -->
 <div id="app">
 
-  <!-- TODAY TAB -->
-  <div id="tab-today" class="tab-panel active">
+  <!-- ══ PLANNER TAB (Schedular) ════════════════════════════ -->
+  <div id="tab-planner" class="tab-panel active">
+    <div class="page">
+
+      <!-- ① CONFIGURE -->
+      <div class="step-wrap u"><div class="step-num">1</div><span class="step-label">Configure your class</span></div>
+      <div class="config-card u u1">
+        <div class="class-section">
+          <div class="class-label">Select class</div>
+          <div class="class-groups">
+            <div class="class-group-row"><span class="cg-label">Primary</span><div class="cg-btns" id="cg-primary"></div></div>
+            <div class="class-group-row"><span class="cg-label">Middle</span><div class="cg-btns" id="cg-middle"></div></div>
+            <div class="class-group-row"><span class="cg-label">Secondary</span><div class="cg-btns" id="cg-secondary"></div></div>
+            <div class="class-group-row"><span class="cg-label">Higher Sec.</span><div class="cg-btns" id="cg-higher"></div></div>
+          </div>
+          <div class="class-info-line" id="class-info-line"></div>
+        </div>
+        <div class="controls-row">
+          <div class="ctrl-field">
+            <span class="ctrl-label">Students</span>
+            <div class="stp">
+              <button class="stp-btn" onclick="adj('stu',-1)">−</button>
+              <input class="stp-inp" type="number" id="stu" value="40" min="5" max="120" oninput="go()">
+              <button class="stp-btn" onclick="adj('stu',1)">+</button>
+            </div>
+          </div>
+          <div class="ctrl-field">
+            <span class="ctrl-label">School week</span>
+            <div class="seg" id="seg-days">
+              <button class="seg-btn on" onclick="setDays(5)">5 days</button>
+              <button class="seg-btn" onclick="setDays(6)">6 days</button>
+            </div>
+          </div>
+          <div class="ctrl-field">
+            <span class="ctrl-label">Delivery</span>
+            <div class="seg" id="seg-mode">
+              <button class="seg-btn on" onclick="setMode('ded')">Dedicated slot</button>
+              <button class="seg-btn" onclick="setMode('emb')">Within lecture</button>
+            </div>
+          </div>
+        </div>
+        <div id="emb-sub" class="emb-sub" style="display:none">
+          <div class="ctrl-field">
+            <span class="ctrl-label">Lectures / week</span>
+            <div class="sstp">
+              <button class="sstp-btn" onclick="adj('lec',-1)">−</button>
+              <input class="sstp-inp" type="number" id="lec" value="4" min="1" max="10" oninput="go()">
+              <button class="sstp-btn" onclick="adj('lec',1)">+</button>
+            </div>
+          </div>
+          <div class="ctrl-field">
+            <span class="ctrl-label">Lecture length (min)</span>
+            <div class="sstp">
+              <button class="sstp-btn" onclick="adj('len',-5)">−</button>
+              <input class="sstp-inp" type="number" id="len" value="45" min="15" max="90" step="5" oninput="go()">
+              <button class="sstp-btn" onclick="adj('len',5)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② VERDICT -->
+      <div class="step-wrap u u1"><div class="step-num">2</div><span class="step-label">Can you reach CP1?</span></div>
+      <div id="verdict" class="verdict ok u u2"></div>
+      <div id="extra-time-panel" style="display:none"></div>
+      <div id="cp-suggest-panel" style="display:none"></div>
+
+      <!-- ③ SCHEDULE -->
+      <div class="step-wrap u u2"><div class="step-num">3</div><span class="step-label">Week-by-week · day-by-day distribution</span></div>
+      <div class="subj-chip-row u u3" id="subj-chips"></div>
+      <div class="sched-wrap u u3" id="sched-wrap"></div>
+
+      <!-- ④ CHECKPOINTS -->
+      <div class="step-wrap u u3"><div class="step-num">4</div><span class="step-label">Annual checkpoints</span></div>
+      <div class="cp-row u u4" id="cp-row"></div>
+
+      <!-- ⑤ YOUR PLAN -->
+      <div class="step-wrap u u4"><div class="step-num">5</div><span class="step-label">Your plan</span></div>
+      <div class="plan-card u u5" id="plan-card"></div>
+
+    </div>
+  </div>
+
+  <!-- ══ TODAY TAB ══════════════════════════════════════════ -->
+  <div id="tab-today" class="tab-panel">
     <div id="today-content">
-      <!-- skeleton -->
       <div class="skeleton skel-block skel-banner"></div>
       <div class="skel-stats">
         <div class="skeleton skel-block skel-stat"></div>
@@ -1161,7 +588,7 @@
     </div>
   </div>
 
-  <!-- CLASS TAB -->
+  <!-- ══ CLASS TAB ══════════════════════════════════════════ -->
   <div id="tab-class" class="tab-panel">
     <div id="class-content">
       <div class="skeleton skel-block" style="height:28px;width:220px;border-radius:8px;margin-bottom:8px;"></div>
@@ -1177,7 +604,7 @@
     </div>
   </div>
 
-  <!-- CURRICULUM TAB -->
+  <!-- ══ CURRICULUM TAB ═════════════════════════════════════ -->
   <div id="tab-curriculum" class="tab-panel">
     <div id="curriculum-content">
       <div class="skeleton skel-block" style="height:28px;width:260px;border-radius:8px;margin-bottom:8px;"></div>
@@ -1185,11 +612,10 @@
       <div class="skeleton skel-block skel-card"></div>
       <div class="skeleton skel-block skel-card"></div>
       <div class="skeleton skel-block skel-card"></div>
-      <div class="skeleton skel-block skel-card"></div>
     </div>
   </div>
 
-  <!-- REPORT TAB -->
+  <!-- ══ REPORT TAB ═════════════════════════════════════════ -->
   <div id="tab-report" class="tab-panel">
     <div id="report-content">
       <div class="skeleton skel-block" style="height:56px;width:200px;border-radius:8px;margin-bottom:20px;"></div>
@@ -1197,9 +623,10 @@
       <div class="skeleton skel-block" style="height:200px;border-radius:var(--radius);margin-bottom:12px;"></div>
     </div>
   </div>
-</div>
 
-<!-- STUDENT DETAIL PANEL -->
+</div><!-- /#app -->
+
+<!-- ── STUDENT DETAIL PANEL ──────────────────────────────── -->
 <div id="detail-panel" role="dialog" aria-modal="true">
   <div id="detail-overlay" onclick="closeDetail()"></div>
   <div id="detail-sheet">
@@ -1209,13 +636,11 @@
         Back to Class
       </button>
     </div>
-    <div class="detail-body" id="detail-body">
-      <!-- filled dynamically -->
-    </div>
+    <div class="detail-body" id="detail-body"></div>
   </div>
 </div>
 
-<!-- SESSION DIALOGUE OVERLAY -->
+<!-- ── SESSION DIALOGUE OVERLAY ──────────────────────────── -->
 <div id="session-overlay" role="dialog" aria-modal="true">
   <div class="so-header">
     <button class="so-close" onclick="closeSession()" aria-label="Close">✕</button>
@@ -1225,21 +650,13 @@
     </div>
     <div class="so-subject-chip" id="so-chip">—</div>
   </div>
-
   <div class="so-body">
-    <!-- Level-up celebration layer -->
     <div class="so-levelup" id="so-levelup">
       <div class="so-levelup-emoji">🌟</div>
       <div class="so-levelup-text">Level Up!</div>
       <div class="so-levelup-sub" id="so-levelup-sub">Moving to next level</div>
     </div>
-
-    <!-- Visual aid -->
-    <div class="so-visual">
-      <div id="so-visual-slot"></div>
-    </div>
-
-    <!-- Chat bubble -->
+    <div class="so-visual"><div id="so-visual-slot"></div></div>
     <div class="so-bubble-wrap">
       <div class="so-bubble">
         <div class="so-stage-label" id="so-stage-label">—</div>
@@ -1247,823 +664,633 @@
       </div>
     </div>
   </div>
-
   <div class="so-footer">
     <div class="so-progress" id="so-progress"></div>
     <button class="so-tap-btn" id="so-tap-btn" onclick="sessionNext()">Tap to continue</button>
   </div>
 </div>
 
+<!-- ── PRINT OVERLAY (Planner) ───────────────────────────── -->
+<div id="pv"><button class="pclose" onclick="hidePrint()">✕ Close</button><div class="pi" id="pi"></div></div>
+
 <script>
-// ─── Firestore REST API (no SDK — avoids WebSocket/PI-Error) ────────────────
+// ════════════════════════════════════════════════════════════
+//  DASHBOARD JS  (Today / Class / Curriculum / Report tabs)
+// ════════════════════════════════════════════════════════════
+
 const FS_PROJECT = 'gujrat-project-6653d';
 const FS_API_KEY = 'AIzaSyC-0kK1L9wVTDSfiQmBVTw6Ul1_jAKqDKM';
 const FS_BASE    = `https://firestore.googleapis.com/v1/projects/${FS_PROJECT}/databases/(default)/documents`;
 const FS_SCHOOL  = 'demo-school';
-
-function fsURL(path) {
-  return `${FS_BASE}${path}?key=${FS_API_KEY}`;
-}
-
-// Parse Firestore REST field value recursively
-function fsParseValue(v) {
-  if (!v || typeof v !== 'object') return null;
-  if ('stringValue'    in v) return v.stringValue;
-  if ('integerValue'   in v) return parseInt(v.integerValue, 10);
-  if ('doubleValue'    in v) return v.doubleValue;
-  if ('booleanValue'   in v) return v.booleanValue;
-  if ('timestampValue' in v) return v.timestampValue;
-  if ('nullValue'      in v) return null;
-  if ('arrayValue'     in v) return (v.arrayValue.values || []).map(fsParseValue);
-  if ('mapValue'       in v) return fsParseDoc(v.mapValue);
+function fsURL(path){return `${FS_BASE}${path}?key=${FS_API_KEY}`}
+function fsParseValue(v){
+  if(!v||typeof v!=='object')return null;
+  if('stringValue'  in v)return v.stringValue;
+  if('integerValue' in v)return parseInt(v.integerValue,10);
+  if('doubleValue'  in v)return v.doubleValue;
+  if('booleanValue' in v)return v.booleanValue;
+  if('timestampValue'in v)return v.timestampValue;
+  if('nullValue'    in v)return null;
+  if('arrayValue'   in v)return(v.arrayValue.values||[]).map(fsParseValue);
+  if('mapValue'     in v)return fsParseDoc(v.mapValue);
   return null;
 }
-function fsParseDoc(doc) {
-  if (!doc || !doc.fields) return {};
-  const out = {};
-  for (const [k, val] of Object.entries(doc.fields)) out[k] = fsParseValue(val);
+function fsParseDoc(doc){
+  if(!doc||!doc.fields)return{};
+  const out={};
+  for(const[k,val]of Object.entries(doc.fields))out[k]=fsParseValue(val);
   return out;
 }
-
-// GET a single Firestore document; returns parsed object or null
-async function fsGet(path) {
-  const res = await fetch(fsURL(path), { cache: 'no-cache' });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Firestore ${res.status} on ${path}`);
+async function fsGet(path){
+  const res=await fetch(fsURL(path),{cache:'no-cache'});
+  if(res.status===404)return null;
+  if(!res.ok)throw new Error(`Firestore ${res.status}`);
   return fsParseDoc(await res.json());
 }
 
-// LIST a Firestore collection; returns array of parsed objects
-async function fsList(path) {
-  const res = await fetch(fsURL(path), { cache: 'no-cache' });
-  if (!res.ok) throw new Error(`Firestore ${res.status} on ${path}`);
-  const body = await res.json();
-  return (body.documents || []).map(d => fsParseDoc(d));
+const DATA={todaySession:null,classSample:null,curriculumSample:null,checkpointReport:null,sessionDialogue:null,source:'loading',lastUpdated:null};
+const BASE='/student/assets/packages/shared_core/assets/mock/';
+
+function setIndicator(source){
+  DATA.source=source;
+  const el=document.getElementById('data-indicator');
+  const txt=document.getElementById('data-indicator-text');
+  el.className='';
+  if(source==='firebase'){el.classList.add('firebase');el.querySelector('.dot').textContent='●';txt.textContent='Firebase';}
+  else if(source==='local'){el.classList.add('local');el.querySelector('.dot').textContent='○';txt.textContent='Local data';}
+  else{el.classList.add('loading');el.querySelector('.dot').textContent='○';txt.textContent='Loading…';}
 }
 
-// ─── Data cache ─────────────────────────────────────────────────────────────
-const DATA = {
-  todaySession: null,
-  classSample: null,
-  curriculumSample: null,
-  checkpointReport: null,
-  sessionDialogue: null,
-  source: 'loading', // 'firebase' | 'local' | 'loading'
-  lastUpdated: null,
-};
-
-// ─── Data source indicator ───────────────────────────────────────────────────
-function setIndicator(source) {
-  DATA.source = source;
-  const el = document.getElementById('data-indicator');
-  const txt = document.getElementById('data-indicator-text');
-  el.className = '';
-  if (source === 'firebase') {
-    el.classList.add('firebase');
-    el.querySelector('.dot').textContent = '●';
-    txt.textContent = 'Firebase';
-  } else if (source === 'local') {
-    el.classList.add('local');
-    el.querySelector('.dot').textContent = '○';
-    txt.textContent = 'Local data';
-  } else {
-    el.classList.add('loading');
-    el.querySelector('.dot').textContent = '○';
-    txt.textContent = 'Loading…';
-  }
-}
-
-// ─── Fetch helpers ───────────────────────────────────────────────────────────
-// Absolute path — works whether app.html is served at /app, /student/, or any other route
-const BASE = '/student/assets/packages/shared_core/assets/mock/';
-
-async function fetchJson(path) {
-  const res = await fetch(path, { cache: 'no-cache' });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${path}`);
+async function fetchJson(path){
+  const res=await fetch(path,{cache:'no-cache'});
+  if(!res.ok)throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
-async function loadAllLocal() {
-  const [todaySession, classSample, curriculumSample, checkpointReport, sessionDialogue] = await Promise.all([
-    fetchJson(BASE + 'today_session.json'),
-    fetchJson(BASE + 'class_sample.json'),
-    fetchJson(BASE + 'curriculum_sample.json'),
-    fetchJson(BASE + 'checkpoint_report_cp2.json'),
-    fetchJson(BASE + 'simulated_session_dialogue.json'),
+async function loadAllLocal(){
+  const[a,b,c,d,e]=await Promise.all([
+    fetchJson(BASE+'today_session.json'),
+    fetchJson(BASE+'class_sample.json'),
+    fetchJson(BASE+'curriculum_sample.json'),
+    fetchJson(BASE+'checkpoint_report_cp2.json'),
+    fetchJson(BASE+'simulated_session_dialogue.json'),
   ]);
-  DATA.todaySession = todaySession;
-  DATA.classSample = classSample;
-  DATA.curriculumSample = curriculumSample;
-  DATA.checkpointReport = checkpointReport;
-  DATA.sessionDialogue = sessionDialogue;
+  DATA.todaySession=a;DATA.classSample=b;DATA.curriculumSample=c;DATA.checkpointReport=d;DATA.sessionDialogue=e;
 }
 
-async function loadFromFirebase() {
-  // Fetch current_session via Firestore REST, local files via server (server injects Firebase data)
-  const [currentSession, classSample, curriculumSample, checkpointReport, sessionDialogue] = await Promise.all([
+async function loadFromFirebase(){
+  const[currentSession,b,c,d,e]=await Promise.all([
     fsGet(`/schools/${FS_SCHOOL}/meta/current_session`),
-    fetchJson(BASE + 'class_sample.json'),
-    fetchJson(BASE + 'curriculum_sample.json'),
-    fetchJson(BASE + 'checkpoint_report_cp2.json'),
-    fetchJson(BASE + 'simulated_session_dialogue.json'),
+    fetchJson(BASE+'class_sample.json'),
+    fetchJson(BASE+'curriculum_sample.json'),
+    fetchJson(BASE+'checkpoint_report_cp2.json'),
+    fetchJson(BASE+'simulated_session_dialogue.json'),
   ]);
-
-  console.log('[Miko] Firestore current_session:', currentSession);
-
-  DATA.classSample      = classSample;
-  DATA.curriculumSample = curriculumSample;
-  DATA.checkpointReport = checkpointReport;
-  DATA.sessionDialogue  = sessionDialogue;
-
-  if (currentSession && currentSession.subject) {
-    // Firebase has a confirmed plan — merge with server-injected today_session for student statuses
-    const serverSession = await fetchJson(BASE + 'today_session.json').catch(() => null);
-    DATA.todaySession = {
+  DATA.classSample=b;DATA.curriculumSample=c;DATA.checkpointReport=d;DATA.sessionDialogue=e;
+  if(currentSession&&currentSession.subject){
+    const serverSession=await fetchJson(BASE+'today_session.json').catch(()=>null);
+    DATA.todaySession={
       ...serverSession,
-      subject:  currentSession.subject,
-      chapter:  currentSession.chapter  || (serverSession && serverSession.chapter) || '',
-      color:    currentSession.color    || '',
-      class:    currentSession.class    || (serverSession && serverSession.grade),
-      mode:     currentSession.mode     || '',
-      planId:   currentSession.planId   || '',
-      status:   currentSession.status   || 'active',
-      students: Array.isArray(currentSession.students) && currentSession.students.length > 0
-                  ? currentSession.students
-                  : (serverSession && serverSession.students) || [],
+      subject:currentSession.subject,
+      chapter:currentSession.chapter||(serverSession&&serverSession.chapter)||'',
+      color:currentSession.color||'',
+      class:currentSession.class||(serverSession&&serverSession.grade),
+      mode:currentSession.mode||'',
+      planId:currentSession.planId||'',
+      status:currentSession.status||'active',
+      students:Array.isArray(currentSession.students)&&currentSession.students.length>0
+        ?currentSession.students
+        :(serverSession&&serverSession.students)||[],
     };
-  } else {
-    // No confirmed plan yet — use server-injected mock (server pulls from Firebase too)
-    console.log('[Miko] No current_session in Firestore — using server JSON');
-    DATA.todaySession = await fetchJson(BASE + 'today_session.json');
+  }else{
+    DATA.todaySession=await fetchJson(BASE+'today_session.json');
   }
 }
 
-// ─── Load all data ───────────────────────────────────────────────────────────
-async function loadData() {
-  try {
-    await loadFromFirebase();
-    setIndicator('firebase');
-  } catch (err) {
-    console.warn('[Miko] Firestore REST failed, using local data:', err.message);
-    try {
-      await loadAllLocal();
-      setIndicator('local');
-    } catch (localErr) {
-      console.error('[Miko] Local load also failed:', localErr);
-      setIndicator('local');
-    }
+async function loadData(){
+  try{await loadFromFirebase();setIndicator('firebase');}
+  catch(err){
+    console.warn('[Miko] Firestore failed:',err.message);
+    try{await loadAllLocal();setIndicator('local');}
+    catch(e){console.error('[Miko] Local load failed:',e);setIndicator('local');}
   }
-  DATA.lastUpdated = new Date();
+  DATA.lastUpdated=new Date();
 }
 
-// ─── TAB SYSTEM ──────────────────────────────────────────────────────────────
-window.switchTab = function(tabId) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === tabId);
-  });
-  const panel = document.getElementById('tab-' + tabId);
-  if (panel) panel.classList.add('active');
+// ── TAB SWITCHING ─────────────────────────────────────────────
+window.switchTab=function(tabId){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tabId));
+  const panel=document.getElementById('tab-'+tabId);
+  if(panel)panel.classList.add('active');
 };
 
-// ─── UTILITIES ───────────────────────────────────────────────────────────────
-function initials(name) {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
+// ── UTILITIES ─────────────────────────────────────────────────
+function initials(name){return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+function fmtTime(s){if(!s||s<=0)return'';const m=Math.floor(s/60),sec=s%60;return`${m}:${String(sec).padStart(2,'0')}`}
+function fmtDate(d){if(!d)return'';try{return new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}catch{return d}}
+function avatarColor(name,c){if(c)return c;const COLS=['#E85D55','#4A3FB7','#1D9E75','#EF9F27','#7c3aed','#2563eb','#059669','#d97706'];let h=0;for(let i=0;i<name.length;i++)h=name.charCodeAt(i)+((h<<5)-h);return COLS[Math.abs(h)%COLS.length]}
+function subjectColor(s){const m={mathematics:'#d97706',math:'#d97706',science:'#059669',language:'#2563eb','social studies':'#7c3aed',social:'#7c3aed'};return m[(s||'').toLowerCase()]||'#6b7280'}
+function subjectAbbr(s){const m={mathematics:'Mth',science:'Sci',language:'Lan','social studies':'Soc'};return m[(s||'').toLowerCase()]||s.slice(0,3)}
+function levelBadgeClass(l){const v=(l||'').toString().toLowerCase();if(v==='l1'||v==='1')return'badge-level-l1';if(v==='l2'||v==='2')return'badge-level-l2';if(v==='l3'||v==='3')return'badge-level-l3';if(v==='l4'||v==='4')return'badge-level-l4';return'badge-level-l1'}
+function statusLabel(s){return{done:'Done',in_progress:'In Progress',pending:'Pending',absent:'Absent'}[s]||s}
+function esc(str){if(str==null)return'';return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
-function fmtTime(seconds) {
-  if (!seconds || seconds <= 0) return '';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-function fmtDate(dateStr) {
-  if (!dateStr) return '';
-  try {
-    return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch { return dateStr; }
-}
-
-function avatarColor(name, providedColor) {
-  if (providedColor) return providedColor;
-  const COLORS = ['#E85D55','#4A3FB7','#1D9E75','#EF9F27','#7c3aed','#2563eb','#059669','#d97706'];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return COLORS[Math.abs(hash) % COLORS.length];
-}
-
-function subjectColor(subj) {
-  const m = { mathematics: '#d97706', math: '#d97706', science: '#059669', language: '#2563eb', 'social studies': '#7c3aed', social: '#7c3aed' };
-  return m[(subj || '').toLowerCase()] || '#6b7280';
-}
-
-function subjectAbbr(subj) {
-  const m = { mathematics: 'Mth', science: 'Sci', language: 'Lan', 'social studies': 'Soc' };
-  return m[(subj || '').toLowerCase()] || subj.slice(0, 3);
-}
-
-function levelBadgeClass(level) {
-  const l = (level || '').toString().toLowerCase();
-  if (l === 'l1' || l === '1') return 'badge-level-l1';
-  if (l === 'l2' || l === '2') return 'badge-level-l2';
-  if (l === 'l3' || l === '3') return 'badge-level-l3';
-  if (l === 'l4' || l === '4') return 'badge-level-l4';
-  return 'badge-level-l1';
-}
-
-function levelLabel(level) {
-  const l = parseInt(level) || level;
-  return 'L' + l;
-}
-
-function statusLabel(status) {
-  const m = { done: 'Done', in_progress: 'In Progress', pending: 'Pending', absent: 'Absent' };
-  return m[status] || status;
-}
-
-// safe HTML
-function esc(str) {
-  if (str == null) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ─── RENDER: TODAY ───────────────────────────────────────────────────────────
-function renderToday() {
-  const container = document.getElementById('today-content');
-  const session = DATA.todaySession;
-
-  if (!session) {
-    container.innerHTML = `
-      <div class="no-session">
-        <div class="icon">📋</div>
-        <p>No session confirmed yet — open the Planner</p>
-      </div>`;
-    return;
-  }
-
-  const students = session.students || [];
-  const counts = { done: 0, in_progress: 0, pending: 0, absent: 0 };
-  students.forEach(s => { if (counts[s.status] !== undefined) counts[s.status]++; else counts.pending++; });
-
-  const color = session.color || subjectColor(session.subject);
-  const sessionDate = session.date ? fmtDate(session.date) : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-  const classNum = session.class || session.grade || '';
-  const chapter = session.chapter || '';
-  const mode = session.mode || '';
-
-  // sort: in_progress first, then done, pending, absent
-  const statusOrder = { in_progress: 0, pending: 1, done: 2, absent: 3 };
-  const sorted = [...students].sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
-
-  const studentCards = sorted.map(s => {
-    const timeStr = fmtTime(s.time_spent_seconds);
-    const lvl = s.level || '';
-    const statusCls = `badge-${s.status}`;
-    const bg = avatarColor(s.name, null);
-    return `
-      <div class="student-card" onclick="window._openSession('${esc(s.id)}')" tabindex="0" role="button" aria-label="Start session with ${esc(s.name)}">
-        <div class="avatar" style="background:${esc(bg)}">${esc(initials(s.name))}</div>
-        <div class="student-info">
-          <div class="student-name">${esc(s.name)}</div>
-          ${s.last_question ? `<div class="student-last-q">"${esc(s.last_question)}"</div>` : ''}
-        </div>
-        <div class="student-badges">
-          ${lvl ? `<span class="badge ${levelBadgeClass(lvl)}">${esc(lvl)}</span>` : ''}
-          <span class="badge ${statusCls}">${esc(statusLabel(s.status))}</span>
-          ${timeStr ? `<span class="time-spent">${esc(timeStr)}</span>` : ''}
-        </div>
-      </div>`;
+// ── RENDER: TODAY ─────────────────────────────────────────────
+function renderToday(){
+  const container=document.getElementById('today-content');
+  const session=DATA.todaySession;
+  if(!session){container.innerHTML=`<div class="no-session"><div class="icon">📋</div><p>No session confirmed yet — open the Planner tab</p></div>`;return;}
+  const students=session.students||[];
+  const counts={done:0,in_progress:0,pending:0,absent:0};
+  students.forEach(s=>{if(counts[s.status]!==undefined)counts[s.status]++;else counts.pending++;});
+  const color=session.color||subjectColor(session.subject);
+  const sessionDate=session.date?fmtDate(session.date):new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  const classNum=session.class||session.grade||'';
+  const chapter=session.chapter||'';
+  const mode=session.mode||'';
+  const statusOrder={in_progress:0,pending:1,done:2,absent:3};
+  const sorted=[...students].sort((a,b)=>(statusOrder[a.status]??99)-(statusOrder[b.status]??99));
+  const studentCards=sorted.map(s=>{
+    const timeStr=fmtTime(s.time_spent_seconds);
+    const bg=avatarColor(s.name,null);
+    return`<div class="student-card" onclick="window._openSession('${esc(s.id)}')" tabindex="0" role="button">
+      <div class="avatar" style="background:${esc(bg)}">${esc(initials(s.name))}</div>
+      <div class="student-info">
+        <div class="student-name">${esc(s.name)}</div>
+        ${s.last_question?`<div class="student-last-q">"${esc(s.last_question)}"</div>`:''}
+      </div>
+      <div class="student-badges">
+        ${s.level?`<span class="badge ${levelBadgeClass(s.level)}">${esc(s.level)}</span>`:''}
+        <span class="badge badge-${s.status}">${esc(statusLabel(s.status))}</span>
+        ${timeStr?`<span class="time-spent">${esc(timeStr)}</span>`:''}
+      </div>
+    </div>`;
   }).join('');
-
-  const lastUpdStr = DATA.lastUpdated ? DATA.lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
-
-  container.innerHTML = `
+  const lastUpdStr=DATA.lastUpdated?DATA.lastUpdated.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'';
+  container.innerHTML=`
     <div class="session-banner" style="background:${esc(color)}">
-      <div class="banner-subject">${esc(session.subject || 'Session')}</div>
-      ${chapter ? `<div class="banner-chapter">${esc(chapter)}</div>` : ''}
+      <div class="banner-subject">${esc(session.subject||'Session')}</div>
+      ${chapter?`<div class="banner-chapter">${esc(chapter)}</div>`:''}
       <div class="banner-meta">
-        ${sessionDate ? `<span class="banner-chip">${esc(sessionDate)}</span>` : ''}
-        ${classNum ? `<span class="banner-chip">Class ${esc(classNum)}</span>` : ''}
-        ${mode ? `<span class="banner-chip">${esc(mode)}</span>` : ''}
+        ${sessionDate?`<span class="banner-chip">${esc(sessionDate)}</span>`:''}
+        ${classNum?`<span class="banner-chip">Class ${esc(classNum)}</span>`:''}
+        ${mode?`<span class="banner-chip">${esc(mode)}</span>`:''}
         <span class="banner-chip">${esc(students.length)} students</span>
       </div>
     </div>
     <div class="stats-row">
-      <div class="stat-pill stat-done">
-        <div class="num">${counts.done}</div>
-        <div class="lbl">Done</div>
-      </div>
-      <div class="stat-pill stat-progress">
-        <div class="num">${counts.in_progress}</div>
-        <div class="lbl">In Progress</div>
-      </div>
-      <div class="stat-pill stat-pending">
-        <div class="num">${counts.pending}</div>
-        <div class="lbl">Pending</div>
-      </div>
-      <div class="stat-pill stat-absent">
-        <div class="num">${counts.absent}</div>
-        <div class="lbl">Absent</div>
-      </div>
+      <div class="stat-pill stat-done"><div class="num">${counts.done}</div><div class="lbl">Done</div></div>
+      <div class="stat-pill stat-progress"><div class="num">${counts.in_progress}</div><div class="lbl">In Progress</div></div>
+      <div class="stat-pill stat-pending"><div class="num">${counts.pending}</div><div class="lbl">Pending</div></div>
+      <div class="stat-pill stat-absent"><div class="num">${counts.absent}</div><div class="lbl">Absent</div></div>
     </div>
     <div class="refresh-row">
-      <span class="last-updated">${lastUpdStr ? 'Updated ' + lastUpdStr : ''}</span>
+      <span class="last-updated">${lastUpdStr?'Updated '+lastUpdStr:''}</span>
       <button class="refresh-btn" id="refresh-btn" onclick="window._refreshToday()">
         <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Refresh
       </button>
     </div>
-    <div class="student-list">${studentCards || '<div class="empty">No students in this session.</div>'}</div>
-  `;
+    <div class="student-list">${studentCards||'<div class="empty">No students in this session.</div>'}</div>`;
 }
 
-window._refreshToday = async function() {
-  const icon = document.getElementById('refresh-icon');
-  if (icon) icon.classList.add('spinning');
-  const btn = document.getElementById('refresh-btn');
-  if (btn) btn.disabled = true;
-
-  await loadData();
-  renderToday();
-
-  if (icon) icon.classList.remove('spinning');
-  if (btn) btn.disabled = false;
+window._refreshToday=async function(){
+  const icon=document.getElementById('refresh-icon');
+  const btn=document.getElementById('refresh-btn');
+  if(icon)icon.classList.add('spinning');
+  if(btn)btn.disabled=true;
+  await loadData();renderToday();
+  if(icon)icon.classList.remove('spinning');
+  if(btn)btn.disabled=false;
 };
 
-// ─── RENDER: CLASS ────────────────────────────────────────────────────────────
-function renderClass() {
-  const container = document.getElementById('class-content');
-  const cls = DATA.classSample;
-  if (!cls) {
-    container.innerHTML = '<div class="empty">Class data not available.</div>';
-    return;
-  }
-
-  const students = cls.students || [];
-  const subjects = ['Mathematics', 'Science', 'Language', 'Social Studies'];
-
-  const cards = students.map(s => {
-    const bg = s.avatar_color || avatarColor(s.name, null);
-    const hasFlag = s.flagged_concepts && s.flagged_concepts.length > 0;
-    const pips = subjects.map(subj => {
-      const lvl = s.current_levels?.[subj] || 0;
-      const abbr = subjectAbbr(subj);
-      const pipHtml = [1,2,3,4].map(i => `<div class="pip ${i <= lvl ? 'filled-' + i : ''}"></div>`).join('');
-      return `<div class="level-row"><span class="subj-abbr">${esc(abbr)}</span><div class="level-pips">${pipHtml}</div></div>`;
+// ── RENDER: CLASS ─────────────────────────────────────────────
+function renderClass(){
+  const container=document.getElementById('class-content');
+  const cls=DATA.classSample;
+  if(!cls){container.innerHTML='<div class="empty">Class data not available.</div>';return;}
+  const students=cls.students||[];
+  const subjects=['Mathematics','Science','Language','Social Studies'];
+  const cards=students.map(s=>{
+    const bg=s.avatar_color||avatarColor(s.name,null);
+    const hasFlag=s.flagged_concepts&&s.flagged_concepts.length>0;
+    const pips=subjects.map(subj=>{
+      const lvl=s.current_levels?.[subj]||0;
+      const pipHtml=[1,2,3,4].map(i=>`<div class="pip ${i<=lvl?'filled-'+i:''}"></div>`).join('');
+      return`<div class="level-row"><span class="subj-abbr">${esc(subjectAbbr(subj))}</span><div class="level-pips">${pipHtml}</div></div>`;
     }).join('');
-
-    return `
-      <div class="class-card" onclick="window._openDetail('${esc(s.id)}')" tabindex="0" role="button" aria-label="View ${esc(s.name)}">
-        ${hasFlag ? '<div class="flag-icon" title="Flagged concept">⚑</div>' : ''}
-        <div class="card-top">
-          <div class="avatar" style="background:${esc(bg)};width:38px;height:38px;font-size:13px;">${esc(initials(s.name))}</div>
-          <div>
-            <div class="student-name">${esc(s.name)}</div>
-            <div class="roll">Roll ${esc(s.roll_no)}</div>
-          </div>
-        </div>
-        <div class="level-bars">${pips}</div>
-      </div>`;
-  }).join('');
-
-  container.innerHTML = `
-    <div class="section-title">Class ${esc(cls.grade)}-${esc(cls.section)}</div>
-    <div class="section-sub">${esc(students.length)} Students</div>
-    <div class="class-grid">${cards}</div>
-  `;
-}
-
-// ─── RENDER: STUDENT DETAIL ───────────────────────────────────────────────────
-window._openDetail = function(studentId) {
-  const cls = DATA.classSample;
-  if (!cls) return;
-  const student = cls.students.find(s => s.id === studentId);
-  if (!student) return;
-
-  const bg = student.avatar_color || avatarColor(student.name, null);
-  const subjects = ['Mathematics', 'Science', 'Language', 'Social Studies'];
-
-  const levelCells = subjects.map(subj => {
-    const lvl = student.current_levels?.[subj] || 1;
-    const label = 'L' + lvl;
-    return `
-      <div class="level-cell">
-        <span class="subj-name">${esc(subj)}</span>
-        <span class="badge ${levelBadgeClass(String(lvl))}">${esc(label)}</span>
-      </div>`;
-  }).join('');
-
-  const flags = (student.flagged_concepts || []).map(fc => `
-    <div class="flag-card">
-      <div class="flag-subj">⚑ ${esc(fc.subject)}</div>
-      <div class="flag-concept">${esc(fc.concept)}</div>
-      <div class="flag-note">${esc(fc.note)}</div>
-    </div>`).join('');
-
-  const sessions = (student.recent_sessions || []).map(sess => `
-    <div class="session-item">
-      <div class="sess-date">${esc(fmtDate(sess.date))}</div>
-      <div class="sess-info">
-        <div class="sess-subj">${esc(sess.subject)}</div>
-        <div class="sess-concept">${esc(sess.concept)}</div>
-        <div class="sess-outcome">${esc(sess.outcome)}</div>
+    return`<div class="class-card" onclick="window._openDetail('${esc(s.id)}')" tabindex="0" role="button">
+      ${hasFlag?'<div class="flag-icon">⚑</div>':''}
+      <div class="card-top">
+        <div class="avatar" style="background:${esc(bg)};width:38px;height:38px;font-size:13px">${esc(initials(s.name))}</div>
+        <div><div class="student-name">${esc(s.name)}</div><div class="roll">Roll ${esc(s.roll_no)}</div></div>
       </div>
-    </div>`).join('');
-
-  document.getElementById('detail-body').innerHTML = `
-    <div class="detail-student-top">
-      <div class="avatar detail-avatar" style="background:${esc(bg)}">${esc(initials(student.name))}</div>
-      <div>
-        <div class="detail-student-name">${esc(student.name)}</div>
-        <div class="detail-roll">Roll No. ${esc(student.roll_no)}</div>
-      </div>
-    </div>
-
-    <div class="detail-section-title">Current Levels</div>
-    <div class="level-grid">${levelCells}</div>
-
-    ${flags ? `<div class="detail-section-title">Flagged Concepts</div>${flags}` : ''}
-
-    <div class="detail-section-title">Recent Sessions</div>
-    ${sessions || '<div class="empty" style="padding:16px 0;text-align:left;font-size:13px;color:var(--ink3)">No recent sessions recorded.</div>'}
-  `;
-
-  const panel = document.getElementById('detail-panel');
-  panel.classList.add('open');
-  document.body.style.overflow = 'hidden';
-};
-
-window.closeDetail = function() {
-  document.getElementById('detail-panel').classList.remove('open');
-  document.body.style.overflow = '';
-};
-
-// keyboard close
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    if (document.getElementById('session-overlay').classList.contains('open')) { closeSession(); return; }
-    window.closeDetail();
-  }
-});
-
-// ─── SESSION DIALOGUE ENGINE ─────────────────────────────────────────────────
-
-const SESSION_STATE = {
-  steps: [],
-  index: 0,
-  studentId: null,
-  autoTimer: null,
-};
-
-// Visual aid SVG renderers
-function renderVisualAid(aid) {
-  if (!aid) return '';
-  if (aid === 'chocolate_4_2') return `
-    <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px">
-      <rect x="10" y="20" width="260" height="60" rx="8" fill="#7B3F00" opacity=".15" stroke="#7B3F00" stroke-width="1.5"/>
-      ${[0,1,2,3].map(i => `
-        <rect x="${10 + i*65}" y="20" width="60" height="60" rx="${i===0?'8 0 0 8':i===3?'0 8 8 0':'0'}" fill="${i<2?'#6B2900':'#D4A574'}" stroke="#fff" stroke-width="2"/>
-        ${i<2 ? `<text x="${10+i*65+30}" y="57" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.7)">🍫</text>` : ''}
-      `).join('')}
-      <text x="140" y="100" text-anchor="middle" font-size="13" fill="rgba(255,255,255,.6)" font-family="sans-serif">2 out of 4 pieces eaten</text>
-    </svg>`;
-  if (aid === 'chocolate_4_3') return `
-    <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px">
-      <rect x="10" y="20" width="260" height="60" rx="8" fill="#7B3F00" opacity=".15" stroke="#7B3F00" stroke-width="1.5"/>
-      ${[0,1,2,3].map(i => `
-        <rect x="${10 + i*65}" y="20" width="60" height="60" rx="${i===0?'8 0 0 8':i===3?'0 8 8 0':'0'}" fill="${i<3?'#6B2900':'#D4A574'}" stroke="#fff" stroke-width="2"/>
-        ${i<3 ? `<text x="${10+i*65+30}" y="57" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.7)">🍫</text>` : ''}
-      `).join('')}
-      <text x="140" y="100" text-anchor="middle" font-size="13" fill="rgba(255,255,255,.6)" font-family="sans-serif">3 out of 4 pieces eaten</text>
-    </svg>`;
-  if (aid === 'star_burst') return `
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:160px">
-      ${[0,1,2,3,4,5,6,7].map(i => {
-        const a = (i * 45) * Math.PI / 180;
-        const x1 = 100 + Math.cos(a)*30, y1 = 100 + Math.sin(a)*30;
-        const x2 = 100 + Math.cos(a)*85, y2 = 100 + Math.sin(a)*85;
-        return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#EF9F27" stroke-width="3" stroke-linecap="round" opacity=".8"/>`;
-      }).join('')}
-      <circle cx="100" cy="100" r="28" fill="#EF9F27"/>
-      <text x="100" y="108" text-anchor="middle" font-size="28">⭐</text>
-    </svg>`;
-  return '';
+      <div class="level-bars">${pips}</div>
+    </div>`;
+  }).join('');
+  container.innerHTML=`<div class="section-title">Class ${esc(cls.grade)}-${esc(cls.section)}</div><div class="section-sub">${esc(students.length)} Students</div><div class="class-grid">${cards}</div>`;
 }
 
-function stageLabel(stage) {
-  if (stage === 'greeting') return 'Greeting';
-  if (stage === 'closing') return 'Closing';
-  if (stage.startsWith('question')) return 'Question';
-  if (stage.startsWith('follow_up')) return 'Follow Up';
-  if (stage.startsWith('evaluating')) return 'Evaluating';
-  return stage.replace(/_/g, ' ');
+window._openDetail=function(studentId){
+  const cls=DATA.classSample;if(!cls)return;
+  const student=cls.students.find(s=>s.id===studentId);if(!student)return;
+  const bg=student.avatar_color||avatarColor(student.name,null);
+  const subjects=['Mathematics','Science','Language','Social Studies'];
+  const levelCells=subjects.map(subj=>{const lvl=student.current_levels?.[subj]||1;return`<div class="level-cell"><span class="subj-name">${esc(subj)}</span><span class="badge ${levelBadgeClass(String(lvl))}">L${esc(lvl)}</span></div>`;}).join('');
+  const flags=(student.flagged_concepts||[]).map(fc=>`<div class="flag-card"><div class="flag-subj">⚑ ${esc(fc.subject)}</div><div class="flag-concept">${esc(fc.concept)}</div><div class="flag-note">${esc(fc.note)}</div></div>`).join('');
+  const sessions=(student.recent_sessions||[]).map(sess=>`<div class="session-item"><div class="sess-date">${esc(fmtDate(sess.date))}</div><div class="sess-info"><div class="sess-subj">${esc(sess.subject)}</div><div class="sess-concept">${esc(sess.concept)}</div><div class="sess-outcome">${esc(sess.outcome)}</div></div></div>`).join('');
+  document.getElementById('detail-body').innerHTML=`
+    <div class="detail-student-top"><div class="avatar detail-avatar" style="background:${esc(bg)}">${esc(initials(student.name))}</div><div><div class="detail-student-name">${esc(student.name)}</div><div class="detail-roll">Roll No. ${esc(student.roll_no)}</div></div></div>
+    <div class="detail-section-title">Current Levels</div><div class="level-grid">${levelCells}</div>
+    ${flags?`<div class="detail-section-title">Flagged Concepts</div>${flags}`:''}
+    <div class="detail-section-title">Recent Sessions</div>${sessions||'<div class="empty" style="padding:16px 0;text-align:left;font-size:13px;color:var(--ink3)">No recent sessions.</div>'}`;
+  document.getElementById('detail-panel').classList.add('open');
+  document.body.style.overflow='hidden';
+};
+window.closeDetail=function(){document.getElementById('detail-panel').classList.remove('open');document.body.style.overflow='';};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('session-overlay').classList.contains('open')){closeSession();return;}window.closeDetail();}});
+
+// ── SESSION DIALOGUE ENGINE ───────────────────────────────────
+const SESSION_STATE={steps:[],index:0,studentId:null,autoTimer:null};
+
+function renderVisualAid(aid){
+  if(!aid)return'';
+  if(aid==='chocolate_4_2')return`<svg viewBox="0 0 280 100" style="width:100%;max-width:280px">${[0,1,2,3].map(i=>`<rect x="${10+i*65}" y="20" width="60" height="60" rx="${i===0?'8 0 0 8':i===3?'0 8 8 0':'0'}" fill="${i<2?'#6B2900':'#D4A574'}" stroke="#fff" stroke-width="2"/>${i<2?`<text x="${10+i*65+30}" y="57" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.7)">🍫</text>`:''}`).join('')}<text x="140" y="96" text-anchor="middle" font-size="11" fill="rgba(255,255,255,.6)" font-family="sans-serif">2 out of 4 pieces eaten</text></svg>`;
+  if(aid==='chocolate_4_3')return`<svg viewBox="0 0 280 100" style="width:100%;max-width:280px">${[0,1,2,3].map(i=>`<rect x="${10+i*65}" y="20" width="60" height="60" rx="${i===0?'8 0 0 8':i===3?'0 8 8 0':'0'}" fill="${i<3?'#6B2900':'#D4A574'}" stroke="#fff" stroke-width="2"/>${i<3?`<text x="${10+i*65+30}" y="57" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.7)">🍫</text>`:''}`).join('')}<text x="140" y="96" text-anchor="middle" font-size="11" fill="rgba(255,255,255,.6)" font-family="sans-serif">3 out of 4 pieces eaten</text></svg>`;
+  if(aid==='star_burst')return`<svg viewBox="0 0 200 200" style="width:160px;height:160px">${[0,1,2,3,4,5,6,7].map(i=>{const a=(i*45)*Math.PI/180;return`<line x1="${100+Math.cos(a)*30}" y1="${100+Math.sin(a)*30}" x2="${100+Math.cos(a)*85}" y2="${100+Math.sin(a)*85}" stroke="#EF9F27" stroke-width="3" stroke-linecap="round" opacity=".8"/>`;}).join('')}<circle cx="100" cy="100" r="28" fill="#EF9F27"/><text x="100" y="108" text-anchor="middle" font-size="28">⭐</text></svg>`;
+  return'';
 }
 
-window._openSession = function(studentId) {
-  const session  = DATA.todaySession;
-  const dialogue = DATA.sessionDialogue;
-  if (!session || !dialogue) return;
+function stageLabel(s){if(s==='greeting')return'Greeting';if(s==='closing')return'Closing';if(s.startsWith('question'))return'Question';if(s.startsWith('follow_up'))return'Follow Up';if(s.startsWith('evaluating'))return'Evaluating';return s.replace(/_/g,' ')}
 
-  const student = (session.students || []).find(s => s.id === studentId);
-  if (!student) return;
-
-  const color = session.color || subjectColor(session.subject);
-  const subject = session.subject || 'Session';
-  const chapter = session.chapter ? ` — ${session.chapter}` : '';
-
-  // Fill header
-  document.getElementById('so-name').textContent = student.name;
-  document.getElementById('so-meta').textContent = `Level ${student.level || 'L1'}  ·  ${student.status || 'Pending'}`;
-  const chip = document.getElementById('so-chip');
-  chip.textContent = subject;
-  chip.style.background = color;
-
-  // Personalise dialogue text for this student
-  const steps = dialogue.map(step => ({
-    ...step,
-    text: step.text.replace('Aarav', student.name.split(' ')[0]),
-  }));
-
-  SESSION_STATE.steps     = steps;
-  SESSION_STATE.index     = 0;
-  SESSION_STATE.studentId = studentId;
-
-  // Build progress dots
-  const prog = document.getElementById('so-progress');
-  prog.innerHTML = steps.map((_, i) => `<div class="so-dot" id="so-dot-${i}"></div>`).join('');
-
+window._openSession=function(studentId){
+  const session=DATA.todaySession,dialogue=DATA.sessionDialogue;
+  if(!session||!dialogue)return;
+  const student=(session.students||[]).find(s=>s.id===studentId);if(!student)return;
+  const color=session.color||subjectColor(session.subject);
+  document.getElementById('so-name').textContent=student.name;
+  document.getElementById('so-meta').textContent=`Level ${student.level||'L1'}  ·  ${student.status||'Pending'}`;
+  const chip=document.getElementById('so-chip');chip.textContent=session.subject||'Session';chip.style.background=color;
+  const steps=dialogue.map(step=>({...step,text:step.text.replace('Aarav',student.name.split(' ')[0])}));
+  SESSION_STATE.steps=steps;SESSION_STATE.index=0;SESSION_STATE.studentId=studentId;
+  document.getElementById('so-progress').innerHTML=steps.map((_,i)=>`<div class="so-dot" id="so-dot-${i}"></div>`).join('');
   document.getElementById('session-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-
+  document.body.style.overflow='hidden';
   renderSessionStep(0);
 };
 
-function renderSessionStep(idx) {
-  clearTimeout(SESSION_STATE.autoTimer);
-  SESSION_STATE.index = idx;
-
-  const steps = SESSION_STATE.steps;
-  const step  = steps[idx];
-
-  // Progress dots
-  steps.forEach((_, i) => {
-    const dot = document.getElementById('so-dot-' + i);
-    if (!dot) return;
-    dot.className = 'so-dot' + (i === idx ? ' active' : i < idx ? ' done' : '');
-  });
-
-  // Stage label
-  document.getElementById('so-stage-label').textContent = stageLabel(step.stage).toUpperCase();
-
-  // Text / thinking animation
-  const textEl = document.getElementById('so-text');
-  const isEval = step.stage.startsWith('evaluating');
-  if (isEval) {
-    textEl.innerHTML = `<div class="so-thinking"><span></span><span></span><span></span></div>`;
-  } else {
-    textEl.style.opacity = '0';
-    textEl.style.transform = 'translateY(6px)';
-    textEl.style.transition = 'none';
-    requestAnimationFrame(() => {
-      textEl.textContent = step.text;
-      requestAnimationFrame(() => {
-        textEl.style.transition = 'opacity .35s, transform .35s';
-        textEl.style.opacity = '1';
-        textEl.style.transform = 'translateY(0)';
-      });
-    });
-  }
-
-  // Visual aid
-  const slot = document.getElementById('so-visual-slot');
-  const aidHtml = renderVisualAid(step.visual_aid);
-  if (aidHtml) {
-    slot.innerHTML = aidHtml;
-    const img = slot.firstElementChild;
-    if (img) {
-      requestAnimationFrame(() => requestAnimationFrame(() => img.classList.add('show')));
-    }
-  } else {
-    slot.innerHTML = '';
-  }
-
-  // Level-up celebration
-  if (step.triggers_level_up) {
-    const lvl = document.getElementById('so-levelup');
-    const sub = document.getElementById('so-levelup-sub');
-    sub.textContent = `${SESSION_STATE.steps[idx - 1]?.stage || 'Great'} — moving to next level!`;
-    lvl.classList.add('show');
-    setTimeout(() => lvl.classList.remove('show'), 2200);
-  }
-
-  // Tap button
-  const btn  = document.getElementById('so-tap-btn');
-  const last = idx === steps.length - 1;
-
-  if (step.requires_tap || isEval || last) {
-    btn.disabled = false;
-    btn.textContent = last ? 'Finish session' : (isEval ? 'Continue' : 'Tap to respond');
-    if (isEval) {
-      // Auto-advance after duration
-      SESSION_STATE.autoTimer = setTimeout(() => sessionNext(), step.duration_ms || 1500);
-      btn.disabled = true;
-    }
-  } else {
-    btn.disabled = true;
-    btn.textContent = 'Playing…';
-    SESSION_STATE.autoTimer = setTimeout(() => sessionNext(), step.duration_ms || 3000);
-  }
+function renderSessionStep(idx){
+  clearTimeout(SESSION_STATE.autoTimer);SESSION_STATE.index=idx;
+  const steps=SESSION_STATE.steps,step=steps[idx];
+  steps.forEach((_,i)=>{const d=document.getElementById('so-dot-'+i);if(d)d.className='so-dot'+(i===idx?' active':i<idx?' done':'');});
+  document.getElementById('so-stage-label').textContent=stageLabel(step.stage).toUpperCase();
+  const textEl=document.getElementById('so-text');
+  const isEval=step.stage.startsWith('evaluating');
+  if(isEval){textEl.innerHTML=`<div class="so-thinking"><span></span><span></span><span></span></div>`;}
+  else{textEl.style.opacity='0';textEl.style.transform='translateY(6px)';textEl.style.transition='none';requestAnimationFrame(()=>{textEl.textContent=step.text;requestAnimationFrame(()=>{textEl.style.transition='opacity .35s,transform .35s';textEl.style.opacity='1';textEl.style.transform='translateY(0)';});});}
+  const slot=document.getElementById('so-visual-slot');
+  const aidHtml=renderVisualAid(step.visual_aid);
+  if(aidHtml){slot.innerHTML=aidHtml;const img=slot.firstElementChild;if(img)requestAnimationFrame(()=>requestAnimationFrame(()=>img.classList.add('show')));}
+  else slot.innerHTML='';
+  if(step.triggers_level_up){const lv=document.getElementById('so-levelup');document.getElementById('so-levelup-sub').textContent='Moving to next level!';lv.classList.add('show');setTimeout(()=>lv.classList.remove('show'),2200);}
+  const btn=document.getElementById('so-tap-btn');
+  const last=idx===steps.length-1;
+  if(step.requires_tap||isEval||last){btn.disabled=false;btn.textContent=last?'Finish session':isEval?'Continue':'Tap to respond';if(isEval){SESSION_STATE.autoTimer=setTimeout(()=>sessionNext(),step.duration_ms||1500);btn.disabled=true;}}
+  else{btn.disabled=true;btn.textContent='Playing…';SESSION_STATE.autoTimer=setTimeout(()=>sessionNext(),step.duration_ms||3000);}
 }
+window.sessionNext=function(){clearTimeout(SESSION_STATE.autoTimer);const{steps,index}=SESSION_STATE;if(index>=steps.length-1){closeSession();return;}renderSessionStep(index+1);};
+window.closeSession=function(){clearTimeout(SESSION_STATE.autoTimer);document.getElementById('session-overlay').classList.remove('open');document.body.style.overflow='';};
 
-window.sessionNext = function() {
-  clearTimeout(SESSION_STATE.autoTimer);
-  const { steps, index } = SESSION_STATE;
-  if (index >= steps.length - 1) { closeSession(); return; }
-  renderSessionStep(index + 1);
-};
-
-window.closeSession = function() {
-  clearTimeout(SESSION_STATE.autoTimer);
-  document.getElementById('session-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-};
-
-// ─── RENDER: CURRICULUM ───────────────────────────────────────────────────────
-function renderCurriculum() {
-  const container = document.getElementById('curriculum-content');
-  const cur = DATA.curriculumSample;
-  if (!cur) {
-    container.innerHTML = '<div class="empty">Curriculum data not available.</div>';
-    return;
-  }
-
-  const concepts = [...(cur.concepts || [])].sort((a, b) => (a.level || 0) - (b.level || 0));
-  const color = subjectColor(cur.subject);
-
-  const cards = concepts.map((c, idx) => {
-    const lvl = c.level || 1;
-    const lvlLabel = 'L' + lvl;
-    const cardId = 'concept-' + idx;
-    return `
-      <div class="concept-card" id="${cardId}">
-        <div class="concept-top" onclick="window._toggleConcept('${cardId}')">
-          <span class="badge ${levelBadgeClass(String(lvl))}">${esc(lvlLabel)}</span>
-          <span class="concept-name">${esc(c.name)}</span>
-          <span class="expand-icon">▾</span>
-        </div>
-        <div class="concept-detail">
-          <div class="qa-block">
-            <div class="qa-label">Sample Question</div>
-            <div class="qa-text">${esc(c.sample_question)}</div>
-          </div>
-          <button class="answer-toggle" onclick="window._toggleAnswer('ans-${cardId}', this)">
-            ▶ Show Answer
-          </button>
-          <div class="answer-content" id="ans-${cardId}">
-            <div class="qa-block">
-              <div class="qa-label">Answer</div>
-              <div class="qa-text">${esc(c.sample_answer)}</div>
-            </div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
-  container.innerHTML = `
-    <div class="curriculum-header">
-      <div class="section-title" style="color:${esc(color)}">${esc(cur.subject)}</div>
-      <div class="section-sub">Chapter: ${esc(cur.chapter)} · ${esc(concepts.length)} Concepts</div>
-    </div>
-    ${cards}
-  `;
-}
-
-window._toggleConcept = function(id) {
-  document.getElementById(id)?.classList.toggle('expanded');
-};
-
-window._toggleAnswer = function(answerId, btn) {
-  const el = document.getElementById(answerId);
-  if (!el) return;
-  el.classList.toggle('revealed');
-  btn.textContent = el.classList.contains('revealed') ? '▼ Hide Answer' : '▶ Show Answer';
-};
-
-// ─── RENDER: REPORT ───────────────────────────────────────────────────────────
-function renderReport() {
-  const container = document.getElementById('report-content');
-  const report = DATA.checkpointReport;
-  if (!report) {
-    container.innerHTML = '<div class="empty">Report data not available.</div>';
-    return;
-  }
-
-  const subjects = ['Mathematics', 'Science', 'Language', 'Social Studies'];
-
-  const weaknessCards = (report.class_weaknesses || []).map(w => {
-    const pct = w.total > 0 ? Math.round((w.below_ideal / w.total) * 100) : 0;
-    const color = subjectColor(w.subject);
-    return `
-      <div class="weakness-card">
-        <div class="wc-subj" style="color:${esc(color)}">${esc(w.subject)}</div>
-        <div class="wc-status">${esc(w.status)}</div>
-        <div class="wc-bar-track">
-          <div class="wc-bar-fill" style="width:${pct}%"></div>
-        </div>
-        <div class="wc-nums">${esc(w.below_ideal)} / ${esc(w.total)} below ideal</div>
-      </div>`;
-  }).join('');
-
-  const tableRows = (report.student_profiles || []).map(sp => {
-    const statusKey = (sp.status || '').toLowerCase().replace(/\s+/g,'_');
-    const statusCls = statusKey === 'on_track' ? 'status-on_track' : statusKey === 'ahead' ? 'status-ahead' : 'status-behind';
-    const subjectCells = subjects.map(subj => {
-      const lvl = sp.levels?.[subj] || '—';
-      const lvlNum = lvl.replace('L','');
-      return `<td><span class="badge ${levelBadgeClass(lvl)}">${esc(lvl)}</span></td>`;
-    }).join('');
-    return `
-      <tr>
-        <td style="font-weight:600;color:var(--ink);white-space:nowrap">${esc(sp.name)}</td>
-        ${subjectCells}
-        <td><span class="status-badge-report ${statusCls}">${esc(sp.status)}</span></td>
-      </tr>`;
-  }).join('');
-
-  const subjectHeaders = subjects.map(s => `<th>${esc(s)}</th>`).join('');
-
-  const incompleteCards = (report.incomplete_assessments || []).map(ia => `
-    <div class="incomplete-card">
-      <div class="ic-name">${esc(ia.name)}</div>
-      <div class="ic-detail">${esc(ia.detail)}</div>
-    </div>`).join('');
-
-  container.innerHTML = `
-    <div class="report-top">
-      <div class="cp-badge">${esc(report.checkpoint)}</div>
-      <div class="report-meta">
-        <div class="rdate">Generated ${esc(fmtDate(report.generated_date))}</div>
-        <div class="rideal">Ideal path level: ${esc(report.ideal_path_level)}</div>
+// ── RENDER: CURRICULUM ────────────────────────────────────────
+function renderCurriculum(){
+  const container=document.getElementById('curriculum-content');
+  const cur=DATA.curriculumSample;
+  if(!cur){container.innerHTML='<div class="empty">Curriculum data not available.</div>';return;}
+  const concepts=[...(cur.concepts||[])].sort((a,b)=>(a.level||0)-(b.level||0));
+  const color=subjectColor(cur.subject);
+  const cards=concepts.map((c,idx)=>{
+    const lvl=c.level||1,cardId='concept-'+idx;
+    return`<div class="concept-card" id="${cardId}">
+      <div class="concept-top" onclick="window._toggleConcept('${cardId}')">
+        <span class="badge ${levelBadgeClass(String(lvl))}">L${esc(lvl)}</span>
+        <span class="concept-name">${esc(c.name)}</span>
+        <span class="expand-icon">▾</span>
       </div>
-    </div>
+      <div class="concept-detail">
+        <div class="qa-block"><div class="qa-label">Sample Question</div><div class="qa-text">${esc(c.sample_question)}</div></div>
+        <button class="answer-toggle" onclick="window._toggleAnswer('ans-${cardId}',this)">▶ Show Answer</button>
+        <div class="answer-content" id="ans-${cardId}"><div class="qa-block"><div class="qa-label">Answer</div><div class="qa-text">${esc(c.sample_answer)}</div></div></div>
+      </div>
+    </div>`;
+  }).join('');
+  container.innerHTML=`<div class="curriculum-header"><div class="section-title" style="color:${esc(color)}">${esc(cur.subject)}</div><div class="section-sub">Chapter: ${esc(cur.chapter)} · ${esc(concepts.length)} Concepts</div></div>${cards}`;
+}
+window._toggleConcept=function(id){document.getElementById(id)?.classList.toggle('expanded')};
+window._toggleAnswer=function(answerId,btn){const el=document.getElementById(answerId);if(!el)return;el.classList.toggle('revealed');btn.textContent=el.classList.contains('revealed')?'▼ Hide Answer':'▶ Show Answer';};
 
-    <div class="section-title">Class Weaknesses</div>
-    <div class="section-sub" style="margin-bottom:12px">Subjects with students below ideal level</div>
+// ── RENDER: REPORT ────────────────────────────────────────────
+function renderReport(){
+  const container=document.getElementById('report-content');
+  const report=DATA.checkpointReport;
+  if(!report){container.innerHTML='<div class="empty">Report data not available.</div>';return;}
+  const subjects=['Mathematics','Science','Language','Social Studies'];
+  const weaknessCards=(report.class_weaknesses||[]).map(w=>{
+    const pct=w.total>0?Math.round((w.below_ideal/w.total)*100):0;
+    const color=subjectColor(w.subject);
+    return`<div class="weakness-card"><div class="wc-subj" style="color:${esc(color)}">${esc(w.subject)}</div><div class="wc-status">${esc(w.status)}</div><div class="wc-bar-track"><div class="wc-bar-fill" style="width:${pct}%"></div></div><div class="wc-nums">${esc(w.below_ideal)} / ${esc(w.total)} below ideal</div></div>`;
+  }).join('');
+  const tableRows=(report.student_profiles||[]).map(sp=>{
+    const key=(sp.status||'').toLowerCase().replace(/\s+/g,'_');
+    const cls=key==='on_track'?'status-on_track':key==='ahead'?'status-ahead':'status-behind';
+    const cells=subjects.map(s=>`<td><span class="badge ${levelBadgeClass(sp.levels?.[s]||'')}">${esc(sp.levels?.[s]||'—')}</span></td>`).join('');
+    return`<tr><td style="font-weight:600;color:var(--ink);white-space:nowrap">${esc(sp.name)}</td>${cells}<td><span class="status-badge-report ${cls}">${esc(sp.status)}</span></td></tr>`;
+  }).join('');
+  const incompletes=(report.incomplete_assessments||[]).map(ia=>`<div class="incomplete-card"><div class="ic-name">${esc(ia.name)}</div><div class="ic-detail">${esc(ia.detail)}</div></div>`).join('');
+  container.innerHTML=`
+    <div class="report-top"><div class="cp-badge">${esc(report.checkpoint)}</div><div class="report-meta"><div class="rdate">Generated ${esc(fmtDate(report.generated_date))}</div><div class="rideal">Ideal path: ${esc(report.ideal_path_level)}</div></div></div>
+    <div class="section-title">Class Weaknesses</div><div class="section-sub" style="margin-bottom:12px">Students below ideal level</div>
     <div class="weakness-grid">${weaknessCards}</div>
-
-    <div class="section-title">Student Profiles</div>
-    <div class="section-sub" style="margin-bottom:12px">${esc((report.student_profiles || []).length)} students assessed</div>
-    <div class="report-table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Student</th>
-            ${subjectHeaders}
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>
-
-    ${incompleteCards ? `
-      <div class="section-title">Incomplete Assessments</div>
-      <div class="section-sub" style="margin-bottom:12px">Students with missing or partial data</div>
-      ${incompleteCards}
-    ` : ''}
-  `;
+    <div class="section-title">Student Profiles</div><div class="section-sub" style="margin-bottom:12px">${esc((report.student_profiles||[]).length)} students</div>
+    <div class="report-table-wrap"><table><thead><tr><th>Student</th>${subjects.map(s=>`<th>${esc(s)}</th>`).join('')}<th>Status</th></tr></thead><tbody>${tableRows}</tbody></table></div>
+    ${incompletes?`<div class="section-title">Incomplete</div>${incompletes}`:''}`;
 }
 
-// ─── RENDER ALL ──────────────────────────────────────────────────────────────
-function renderAll() {
-  renderToday();
-  renderClass();
-  renderCurriculum();
-  renderReport();
-}
+function renderAll(){renderToday();renderClass();renderCurriculum();renderReport();}
 
-// ─── AUTO REFRESH (30s for Today tab) ────────────────────────────────────────
-let autoRefreshTimer = null;
-
-function startAutoRefresh() {
+let autoRefreshTimer=null;
+function startAutoRefresh(){
   clearInterval(autoRefreshTimer);
-  autoRefreshTimer = setInterval(async () => {
-    // only refresh if Today tab is active
-    const todayPanel = document.getElementById('tab-today');
-    if (todayPanel && todayPanel.classList.contains('active')) {
-      await loadData();
-      renderToday();
-    }
-  }, 30000);
+  autoRefreshTimer=setInterval(async()=>{
+    if(document.getElementById('tab-today')?.classList.contains('active')){await loadData();renderToday();}
+  },30000);
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-(async function init() {
+// ════════════════════════════════════════════════════════════
+//  PLANNER JS  (Schedular logic)
+// ════════════════════════════════════════════════════════════
+
+const CD={
+  1:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'art',n:'Art & Craft',h:'#7c3aed'}],board:false,internal:false},
+  2:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'art',n:'Art & Craft',h:'#7c3aed'}],board:false,internal:false},
+  3:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  4:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  5:{g:'Primary',  subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'lang',n:'Language',h:'#2563eb'},{id:'evs',n:'EVS',h:'#059669'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  6:{g:'Middle',   subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  7:{g:'Middle',   subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  8:{g:'Middle',   subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:false},
+  9:{g:'Secondary',subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:false,internal:true},
+  10:{g:'Secondary',subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'sci',n:'Science',h:'#059669'},{id:'eng',n:'English',h:'#2563eb'},{id:'soc',n:'Social Studies',h:'#7c3aed'}],board:true,internal:true},
+  11:{g:'Higher Sec.',subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'phy',n:'Physics',h:'#059669'},{id:'chem',n:'Chemistry',h:'#2563eb'},{id:'bio',n:'Biology / CS',h:'#7c3aed'}],board:false,internal:true,note:'Science stream'},
+  12:{g:'Higher Sec.',subjs:[{id:'math',n:'Mathematics',h:'#d97706'},{id:'phy',n:'Physics',h:'#059669'},{id:'chem',n:'Chemistry',h:'#2563eb'},{id:'bio',n:'Biology / CS',h:'#7c3aed'}],board:true,internal:true,note:'Science stream'},
+};
+
+const GUJ_EXAMS=[
+  {label:'Internal exams',   s:new Date(2026,9,22), e:new Date(2026,10,2), cls:[9,10,11,12]},
+  {label:'Internal exams',   s:new Date(2027,0,18), e:new Date(2027,0,28), cls:[9,10,11,12]},
+  {label:'Pre-board exams',  s:new Date(2027,1,1),  e:new Date(2027,1,3),  cls:[10,12]},
+  {label:'Science practicals',s:new Date(2027,1,5), e:new Date(2027,1,13), cls:[12]},
+  {label:'Board exams',      s:new Date(2027,1,25), e:new Date(2027,2,17), cls:[10,12]},
+  {label:'Annual exams',     s:new Date(2027,3,5),  e:new Date(2027,3,20), cls:[9,11]},
+];
+const GUJ_HOLS=[
+  new Date(2026,10,5),new Date(2026,10,6),new Date(2026,10,7),new Date(2026,10,8),new Date(2026,10,9),new Date(2026,10,10),new Date(2026,10,11),new Date(2026,10,12),new Date(2026,10,13),new Date(2026,10,14),new Date(2026,10,15),new Date(2026,10,16),new Date(2026,10,17),new Date(2026,10,18),new Date(2026,10,19),new Date(2026,10,20),new Date(2026,10,21),new Date(2026,10,22),new Date(2026,10,23),new Date(2026,10,24),new Date(2026,10,25),
+  new Date(2026,7,15),new Date(2026,7,18),new Date(2026,8,2),new Date(2026,9,2),new Date(2026,9,12),new Date(2027,0,14),new Date(2027,0,26),new Date(2027,2,17)
+];
+const TERM_START=new Date(2026,5,8),TERM1_END=new Date(2026,10,4),TERM2_S=new Date(2026,10,26),TERM2_E=new Date(2027,4,2),SUMMER_S=new Date(2027,4,3);
+const CP1_WKS=8,MIN_S=5,BASE_STU=40,BASE_MIN=50,EMB_R=10/45;
+
+let selClass=5,schoolDays=5,mode='ded',activeSubjs=new Set(['math','sci','lang','soc']),extraTimeMode=null,cpCycleMode=null,cpWindowMode=8;
+
+function adj(id,d){const el=document.getElementById(id);const mn={stu:5,lec:1,len:15},mx={stu:120,lec:10,len:90};el.value=Math.min(mx[id],Math.max(mn[id],+el.value+d));go();}
+function setDays(n){schoolDays=n;document.getElementById('seg-days').querySelectorAll('.seg-btn').forEach((b,i)=>b.classList.toggle('on',(i===0&&n===5)||(i===1&&n===6)));go();}
+function setMode(m){mode=m;document.getElementById('seg-mode').querySelectorAll('.seg-btn').forEach((b,i)=>b.classList.toggle('on',(i===0&&m==='ded')||(i===1&&m==='emb')));document.getElementById('emb-sub').style.display=m==='emb'?'grid':'none';go();}
+function selectClass(c){selClass=c;activeSubjs=new Set(CD[c].subjs.map(s=>s.id));extraTimeMode=null;cpCycleMode=null;cpWindowMode=8;document.querySelectorAll('.c-btn').forEach(b=>b.classList.toggle('on',+b.dataset.cls===c));document.getElementById('nav-class-lbl') && (document.getElementById('nav-class-lbl').textContent='Class '+c);go();}
+function toggleSubj(id){if(activeSubjs.has(id)){if(activeSubjs.size>1)activeSubjs.delete(id);}else activeSubjs.add(id);go();}
+
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function fmt(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}
+function embMins(len){return Math.min(len,parseFloat((EMB_R*len).toFixed(1)))}
+function embPerLec(len){return Math.floor(embMins(len)/MIN_S)}
+function classExams(cls){return GUJ_EXAMS.filter(e=>e.cls.includes(cls))}
+function isExamWeek(wkStart,cls){const exams=classExams(cls);for(let d=0;d<7;d++){const day=addDays(wkStart,d);if(exams.some(e=>day>=e.s&&day<=e.e))return true;}return false;}
+function isHolidayWeek(wkStart){let sc=0;for(let d=0;d<(schoolDays===6?6:5);d++){const day=addDays(wkStart,d);if(day.getDay()===0)continue;if(GUJ_HOLS.some(h=>h.toDateString()===day.toDateString()))continue;if(day>=TERM_START&&(day<=TERM1_END||(day>=TERM2_S&&day<SUMMER_S)))sc++;}return sc<2;}
+function isSchoolWeek(wkStart){if(isHolidayWeek(wkStart))return false;if(wkStart>=SUMMER_S)return false;if(wkStart>TERM1_END&&wkStart<TERM2_S)return false;return true;}
+
+function buildWeeks(numWeeks,cls){
+  const result=[];let cur=new Date(TERM_START);
+  while(cur.getDay()!==1)cur=addDays(cur,1);
+  let found=0,attempts=0;
+  while(found<numWeeks&&attempts<120){
+    attempts++;
+    const isSchool=isSchoolWeek(cur),isExam=isExamWeek(cur,cls);
+    const wk={start:new Date(cur),isExam,isSchool,examLabel:''};
+    if(isExam){const ex=classExams(cls).find(e=>addDays(cur,6)>=e.s&&cur<=e.e);if(ex)wk.examLabel=ex.label.split(' ').slice(0,2).join(' ');}
+    result.push(wk);
+    if(isSchool&&!isExam)found++;
+    cur=addDays(cur,7);
+  }
+  return result;
+}
+
+function go(){
+  const stu=Math.max(5,+document.getElementById('stu').value||40);
+  const lec=+document.getElementById('lec').value||4;
+  const len=+document.getElementById('len').value||45;
+  const cd=CD[selClass];
+  const actDays=schoolDays-1;
+  const allSubjs=cd.subjs;
+  const subjs=allSubjs.filter(s=>activeSubjs.has(s.id));
+  const sessionMin=Math.max(10,Math.round((stu/BASE_STU)*BASE_MIN));
+  const embAssessMin=parseFloat((EMB_R*len).toFixed(1));
+  const embStuPerLec=Math.max(1,Math.floor(embAssessMin/MIN_S));
+  const lecPerDayBase=Math.floor(lec/actDays);
+  const lecPerDayExtra=lec%actDays;
+  const maxLecPerDay=lecPerDayBase+(lecPerDayExtra>0?1:0);
+  const embPerDayMax=maxLecPerDay*embStuPerLec;
+  const embWkCap=lec*embStuPerLec;
+  const perDay=mode==='ded'?Math.max(1,Math.floor(sessionMin/MIN_S)):embPerDayMax;
+  const wkCap=mode==='ded'?perDay*actDays:embWkCap;
+  const wps=wkCap>0?Math.ceil(stu/wkCap):99;
+  const totalWks=wps*subjs.length;
+  const fits=totalWks<=cpWindowMode;
+  const slack=cpWindowMode-totalWks;
+  if(fits&&cpCycleMode&&!extraTimeMode)cpCycleMode=null;
+  const cycleSubjs=cpCycleMode?subjs.slice(0,cpCycleMode):subjs;
+  const nextCycleSubjs=cpCycleMode?subjs.slice(cpCycleMode):[];
+  const slackSessions=slack*wkCap;
+  const extraMinPerStu=mode==='ded'?Math.floor((slack*actDays*sessionMin)/Math.max(1,stu)):Math.floor((slack*embWkCap*embAssessMin)/Math.max(1,stu));
+  const effectiveSessionMin=extraTimeMode==='mins'?(mode==='ded'?sessionMin+extraMinPerStu:embAssessMin+extraMinPerStu):(mode==='ded'?sessionMin:embAssessMin);
+  const canDoTwice=fits&&slack>=totalWks&&cpWindowMode>=totalWks*2;
+  const calWksNeeded=(cpCycleMode?wps*cpCycleMode:totalWks)+(extraTimeMode==='twice'&&canDoTwice?totalWks:0)+8;
+  const calWks=buildWeeks(calWksNeeded,selClass);
+  let wkIdx=0;
+  const subjWks=cycleSubjs.map(s=>{const assigned=[];let w=0;while(w<wps&&wkIdx<calWks.length){const wk=calWks[wkIdx];wkIdx++;if(wk.isSchool&&!wk.isExam){assigned.push(wk);w++;}}return{...s,weeks:assigned};});
+  const subjWks2=(extraTimeMode==='twice'&&canDoTwice)?cycleSubjs.map(s=>{const assigned=[];let w=0;while(w<wps&&wkIdx<calWks.length){const wk=calWks[wkIdx];wkIdx++;if(wk.isSchool&&!wk.isExam){assigned.push(wk);w++;}}return{...s,weeks:assigned};}):[];
+  const canRemove=subjs.length>1;
+  const fewWks=wps*(subjs.length-1);
+  const hint=!fits&&subjs.length>1?`Remove 1 subject → ${fewWks} wks${fewWks<=CP1_WKS?' ✓ fits CP1':''}`:fits&&subjs.length<allSubjs.length?'All subjects fit — add more?':'';
+  document.getElementById('subj-chips').innerHTML=`<span class="subj-chip-label">Subjects</span>${allSubjs.map(s=>{const on=activeSubjs.has(s.id);return`<div class="subj-chip${on?' on':''}" onclick="toggleSubj('${s.id}')" style="${on?`border-color:${s.h}`:''}"><span class="subj-chip-dot" style="background:${on?s.h:'var(--border2)'}"></span>${s.n}${on&&canRemove?`<span class="subj-chip-x" style="color:${s.h}">×</span>`:!on?`<span style="font-size:11px;color:var(--ink3)">+ add</span>`:''}</div>`;}).join('')}${hint?`<span class="subj-chip-hint">${hint}</span>`:''}`;
+  let avail=0,cp1Date=null;
+  for(const wk of calWks){if(wk.isSchool&&!wk.isExam){avail++;if(avail===CP1_WKS){cp1Date=addDays(wk.start,actDays-1);break;}}}
+  const exams=classExams(selClass);
+  const examTags=exams.length>0?exams.map(e=>`<span class="exam-tag">🚫 ${e.label}: ${fmt(e.s)}–${fmt(e.e)}</span>`).join(''):'';
+  document.getElementById('class-info-line').innerHTML=`<b>Class ${selClass}</b> · ${cd.g} · ${cd.subjs.length} subjects: <b>${cd.subjs.map(s=>s.n).join(', ')}</b>${cd.note?` · ${cd.note}`:''}${examTags?'<br>Exam blackouts: '+examTags:''}`;
+  const vel=document.getElementById('verdict');
+  vel.className=`verdict ${fits?'ok':'bad'} u u2`;
+  const firstDate=subjWks[0]?.weeks[0]?.start;
+  const cp1Str=cp1Date?fmt(cp1Date):'Week '+CP1_WKS;
+  const modeDesc=mode==='ded'?`${sessionMin}-min dedicated session · ${perDay} students/day`:`${len}-min lecture → ${embAssessMin} min assessment · ${embStuPerLec} students/lecture · ${lec} lec/week = ${embWkCap} students/week`;
+  vel.innerHTML=fits?`<div class="v-tag"><div class="v-dot"></div>CP1 achievable${slack>0?' — '+slack+' week'+(slack>1?'s':'')+' of slack':' — right on schedule'}</div><div class="v-headline">All ${stu} students · ${subjs.length} subject${subjs.length>1?'s':''} · covered by ${cp1Str}.</div><div class="v-body">${modeDesc} · ${wps} week${wps>1?'s':''} per subject.${firstDate?' Starting <strong>'+fmt(firstDate)+'</strong>.':''}</div><div class="v-three"><div class="vt"><div class="vt-n">${mode==='ded'?sessionMin:embWkCap}<span style="font-size:14px;color:var(--ink3)">${mode==='ded'?' min':' /wk'}</span></div><div class="vt-l">${mode==='ded'?'Session length':'Students/week'}</div></div><div class="vt"><div class="vt-n">${perDay}<span style="font-size:14px;color:var(--ink3)"> /day</span></div><div class="vt-l">Students per day</div></div><div class="vt"><div class="vt-n">${totalWks}<span style="font-size:14px;color:var(--ink3)"> wks</span></div><div class="vt-l">Total weeks needed</div></div></div>`:
+  `<div class="v-tag"><div class="v-dot"></div>CP1 at risk — ${totalWks-cpWindowMode} week${totalWks-cpWindowMode>1?'s':''} over</div><div class="v-headline">${totalWks} weeks needed. CP1 closes at ${cp1Str}.</div><div class="v-body">${modeDesc} · ${wps} wk/subject × ${subjs.length} = ${totalWks} weeks.</div><div class="v-three"><div class="vt"><div class="vt-n">${mode==='ded'?sessionMin:embWkCap}<span style="font-size:14px;color:var(--ink3)">${mode==='ded'?' min':' /wk'}</span></div><div class="vt-l">${mode==='ded'?'Session length':'Students/week'}</div></div><div class="vt"><div class="vt-n">${perDay}<span style="font-size:14px;color:var(--ink3)"> /day</span></div><div class="vt-l">Students per day</div></div><div class="vt"><div class="vt-n" style="color:var(--bad)">${totalWks}<span style="font-size:14px"> wks</span></div><div class="vt-l">Need — limit is ${cpWindowMode}</div></div></div>`;
+  const etPanel=document.getElementById('extra-time-panel');
+  if(fits&&slack>0){
+    const extraMinTotal=mode==='ded'?sessionMin+extraMinPerStu:embAssessMin+extraMinPerStu;
+    etPanel.style.display='block';etPanel.className='extra-panel';
+    etPanel.innerHTML=`<div class="extra-panel-hd"><div><div class="extra-panel-title">You have ${slack} spare week${slack>1?'s':''} before CP1 — use them?</div><div class="extra-panel-sub">Assessment ends at week ${totalWks}. CP1 is week ${cpWindowMode}.</div></div>${extraTimeMode?`<button onclick="extraTimeMode=null;go()" style="padding:6px 12px;font-size:11px;font-weight:600;font-family:inherit;background:var(--bg);border:1px solid var(--border2);border-radius:6px;cursor:pointer;color:var(--ink3)">Clear</button>`:''}</div><div class="extra-options"><div class="extra-opt${extraTimeMode==='mins'?' on':''}" onclick="extraTimeMode='mins';go()"><div class="extra-opt-top"><span class="extra-opt-name">More time per student</span><div class="extra-opt-radio"><div class="extra-opt-radio-dot"></div></div></div><div class="extra-opt-val">${extraMinTotal}<span style="font-size:14px;color:var(--ink3)"> min</span></div><div class="extra-opt-desc">Up from ${mode==='ded'?sessionMin:Math.round(embAssessMin)} min. ~${extraMinPerStu} extra minutes each.</div></div><div class="extra-opt${extraTimeMode==='twice'?' on':''}" style="${!canDoTwice?'opacity:.5;cursor:not-allowed':''}" onclick="${canDoTwice?`extraTimeMode='twice';go()`:''}"><div class="extra-opt-top"><span class="extra-opt-name">Assess students twice</span><div class="extra-opt-radio"><div class="extra-opt-radio-dot"></div></div></div><div class="extra-opt-val">${canDoTwice?'2×':'Not enough'}</div><div class="extra-opt-desc">${canDoTwice?`Full second round fits before CP1`:`Need ${totalWks} slack weeks, have ${slack}.`}</div></div></div>`;
+  }else{etPanel.style.display='none';if(!fits)extraTimeMode=null;}
+  const cpSugPanel=document.getElementById('cp-suggest-panel');
+  cpSugPanel.style.display='block';cpSugPanel.className='cp-suggest';
+  const CP_WINDOWS=[8,12,16];const subjectOptions=[1,2,3,4].filter(n=>n<=subjs.length);
+  const activeSubs=cpCycleMode||subjs.length;const activeWin=cpWindowMode;
+  cpSugPanel.innerHTML=`<div class="cps-top"><span class="cps-icon">${fits?'💡':'⚠️'}</span><div style="flex:1"><div class="cps-title">Checkpoint cycle options</div><div class="cps-body">${subjs.length} subjects × ${wps} wk = ${totalWks} wks. CP1 window: ${cpWindowMode} weeks.</div></div>${(cpCycleMode||cpWindowMode!==8)?`<button onclick="cpCycleMode=null;cpWindowMode=8;go()" style="padding:6px 12px;font-size:11px;font-weight:600;font-family:inherit;background:var(--surface);border:1px solid var(--border2);border-radius:6px;cursor:pointer;color:var(--ink3);white-space:nowrap;flex-shrink:0;margin-left:8px">Reset</button>`:''}</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:2px"><div><div style="font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Subjects per cycle</div><div style="display:flex;gap:6px;flex-wrap:wrap">${subjectOptions.map(n=>{const wksN=wps*n;const fitsW=wksN<=cpWindowMode;const isActive=(cpCycleMode===n)||(n===subjs.length&&!cpCycleMode);return`<div onclick="cpCycleMode=${n===subjs.length?null:n};go()" style="flex:1;min-width:100px;padding:10px 12px;border-radius:8px;border:1.5px solid ${isActive?'var(--ok)':fitsW?'var(--border)':'var(--bad-b)'};background:${isActive?'var(--ok-bg)':fitsW?'var(--surface)':'var(--bad-bg)'};cursor:pointer"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:600;color:var(--ink)">${n} subject${n>1?'s':''}</span>${isActive?`<span style="color:var(--ok)">✓</span>`:''}</div><div style="font-size:16px;font-weight:600;color:${fitsW?'var(--ok)':'var(--bad)'};line-height:1;margin-bottom:2px">${wksN} wks ${fitsW?'✓':'⚠'}</div></div>`;}).join('')}</div></div><div><div style="font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">CP1 window</div><div style="display:flex;gap:6px;flex-wrap:wrap">${CP_WINDOWS.map(w=>{const wksForCycle=wps*(cpCycleMode||subjs.length);const fitsW=wksForCycle<=w;const isActive=cpWindowMode===w;return`<div onclick="cpWindowMode=${w};go()" style="flex:1;min-width:100px;padding:10px 12px;border-radius:8px;border:1.5px solid ${isActive?'#0284c7':fitsW?'var(--border)':'var(--bad-b)'};background:${isActive?'#eff6ff':fitsW?'var(--surface)':'var(--bad-bg)'};cursor:pointer"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:600;color:var(--ink)">Week ${w}</span>${isActive?`<span style="color:#0284c7">✓</span>`:''}</div><div style="font-size:11px;font-weight:500;color:${fitsW?'var(--ok)':'var(--bad)'};margin-bottom:2px">${fitsW?'Fits ✓':'Over ⚠'}</div></div>`;}).join('')}</div></div></div>`;
+  const DNAMES_SHORT=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const schedWrap=document.getElementById('sched-wrap');
+  function renderSubjBlock(swks,roundLabel){
+    return swks.map(s=>{
+      const spill=s.weeks.length>1;let weekBlocks='';
+      s.weeks.forEach((wk,wi)=>{
+        let stuStart=wi*wkCap;let dayCols='';
+        for(let d=0;d<schoolDays;d++){
+          const isBuf=d===actDays;
+          if(isBuf){dayCols+=`<div class="day-col buf-col"><span class="dn">${DNAMES_SHORT[d]}</span><span class="buf-label">Buffer</span></div>`;continue;}
+          if(mode==='ded'){
+            const n=Math.min(perDay,Math.max(0,stu-stuStart));
+            if(n>0){const from=stuStart+1,to=stuStart+n;stuStart+=n;dayCols+=`<div class="day-col"><span class="dn">${DNAMES_SHORT[d]}</span><div class="day-pill" style="background:${s.h}"><span class="dp-n">${n}</span><span class="dp-range">${from}–${to}</span><span class="dp-min">${effectiveSessionMin} min</span></div></div>`;}
+            else dayCols+=`<div class="day-col free-col"><span class="dn">${DNAMES_SHORT[d]}</span><span class="buf-label">Free</span></div>`;
+          }else{
+            const dayLec=lecPerDayBase+(d<lecPerDayExtra?1:0);const n=Math.min(dayLec*embStuPerLec,Math.max(0,stu-stuStart));
+            if(n>0&&dayLec>0){const from=stuStart+1,to=stuStart+n;stuStart+=n;let slots='';let slotStu=from;for(let l=0;l<dayLec;l++){const sn=Math.min(embStuPerLec,to-slotStu+1);if(sn<=0)break;slots+=`<div style="width:100%;border-radius:5px;padding:3px 4px;background:${s.h};opacity:${1-l*0.12};text-align:center;margin-bottom:2px"><div style="font-size:10px;font-weight:600;color:#fff;line-height:1">${sn} stu</div><div style="font-size:9px;color:rgba(255,255,255,.8)">${slotStu}–${slotStu+sn-1}</div></div>`;slotStu+=sn;}dayCols+=`<div class="day-col" style="padding:6px 5px;gap:2px"><span class="dn">${DNAMES_SHORT[d]}</span>${slots}</div>`;}
+            else dayCols+=`<div class="day-col free-col"><span class="dn">${DNAMES_SHORT[d]}</span><span class="buf-label">Free</span></div>`;
+          }
+        }
+        const mo=wk.start.toLocaleDateString('en-GB',{month:'short'});
+        const wkLabel=`${mo} · Wk ${Math.ceil(wk.start.getDate()/7)}`;
+        weekBlocks+=`<div class="week-block${wi>0?' spill-wk':''}"><div class="day-row" style="grid-template-columns:96px repeat(${schoolDays},1fr)"><div class="week-tag"><span class="wt-label${wi>0?' warn':''}">${wkLabel}</span><span class="wt-date">${fmt(wk.start)}</span></div>${dayCols}</div></div>`;
+      });
+      const totalCovered=Math.min(wkCap*s.weeks.length,stu);
+      const dateRange=s.weeks.length>0?`${fmt(s.weeks[0].start)} – ${fmt(addDays(s.weeks[s.weeks.length-1].start,actDays-1))}`:'-';
+      return`<div class="subj-card${spill?' spill':''}"><div class="sc-hd${spill?' spill-hd':''}"><span class="sc-name"><span class="sc-dot" style="background:${s.h}"></span>${s.n}${roundLabel?`<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;background:${s.h}22;color:${s.h};border:1px solid ${s.h}44;margin-left:4px">${roundLabel}</span>`:''}</span><span class="sc-meta${spill?' warn':''}">${spill?`Spans ${s.weeks.length} weeks · `:''}${dateRange}</span></div><div>${weekBlocks}</div><div class="sc-footer"><span class="sc-footer-detail">${totalCovered} students · ${s.weeks.length*actDays} active days · ${effectiveSessionMin} min/session</span><span class="sc-footer-badge">✓ ${totalCovered}/${stu}</span></div></div>`;
+    }).join('');
+  }
+  let schedHTML=renderSubjBlock(subjWks,extraTimeMode==='twice'?'Round 1':'');
+  if(extraTimeMode==='twice'&&canDoTwice&&subjWks2.length>0){schedHTML+=`<div style="padding:10px 16px;background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:10px;font-size:12px;font-weight:600;color:var(--ok)">Round 2 — every student assessed again before CP1</div>`;schedHTML+=renderSubjBlock(subjWks2,'Round 2');}
+  if(nextCycleSubjs.length>0){schedHTML+=`<div style="padding:10px 16px;background:var(--warn-bg);border:1px solid var(--warn-b);border-radius:10px;font-size:12px;font-weight:600;color:var(--warn)">Next cycle: ${nextCycleSubjs.map(s=>s.n).join(', ')}</div>`;}
+  schedWrap.innerHTML=schedHTML;
+  const cpDefs=[{n:'CP1',lv:'L1 — Foundational',desc:'Every child assessed at least once.',wk:8,h:'#0284c7'},{n:'CP2',lv:'L2 — Elementary',desc:'Progress tracked.',wk:16,h:'#059669'},{n:'CP3',lv:'L3 — Developing',desc:'Mid-year movement.',wk:24,h:'#d97706'},{n:'CP4',lv:'L4 — Advanced',desc:'Year-end snapshot.',wk:32,h:'#7c3aed'}];
+  const effectiveWks=cpCycleMode?wps*cpCycleMode:totalWks;const effectiveFits=effectiveWks<=cpWindowMode;
+  document.getElementById('cp-row').innerHTML=cpDefs.map((cp,i)=>{const cpFits=i===0?effectiveFits:true;const badgeCls=i===0?(cpFits?'s-ok':'s-warn'):'s-muted';const wkTarget=i===0?cpWindowMode:cp.wk;return`<div class="cp-card" style="border-top-color:${cp.h}"><div class="cp-num">${cp.n} · Week ${wkTarget}</div><div class="cp-wk">${effectiveWks} wks</div><div class="cp-date-real">${i===0?cp1Str:'~Week '+wkTarget}</div><div class="cp-level">${cp.lv}<br><span style="font-size:11px;opacity:.7">${cp.desc}</span></div><span class="cp-status ${badgeCls}">${i===0?(cpFits?(cpWindowMode-effectiveWks)+' wk slack':'over'):'follows CP1'}</span></div>`;}).join('');
+  const totalHrs=parseFloat(((stu*subjs.length*MIN_S)/60).toFixed(1));
+  const extraNote=extraTimeMode==='mins'?`Each student gets <b>${effectiveSessionMin} min</b> — extended from ${mode==='ded'?sessionMin:Math.round(embAssessMin)} min`:extraTimeMode==='twice'&&canDoTwice?`Students assessed <b>twice</b> before CP1`:'';
+  const cycleNote=cpCycleMode?`Cycle: <b>${cpCycleMode} subjects</b> — ${nextCycleSubjs.map(s=>s.n).join(', ')} next`:'';
+  const planLines=[
+    {icon:'📚',text:`<b>${stu} students</b> · <b>${cycleSubjs.length} subject${cycleSubjs.length>1?'s':''}</b> · ${effectiveSessionMin} min/session · ${perDay} students/day`,date:firstDate?'Starts '+fmt(firstDate):''},
+    {icon:'📅',text:`<b>${effectiveWks} weeks</b> total · ${wps} week${wps>1?'s':''}/subject · 1 buffer day/week`,date:''},
+    {icon:'⏱',text:`<b>${totalHrs} hrs</b> of AI assessment time this cycle`,date:''},
+    {icon:'🎯',text:`<b>CP1 deadline</b> — ${cycleSubjs.map(s=>s.n).join(', ')} complete`,date:cp1Str},
+    {icon:'🚫',text:`Exam blackouts auto-applied — <b>${classExams(selClass).length}</b> period${classExams(selClass).length!==1?'s':''} excluded`,date:''},
+    ...(extraNote?[{icon:'✨',text:extraNote,date:''}]:[]),
+    ...(cycleNote?[{icon:'🔄',text:cycleNote,date:''}]:[]),
+  ].map(l=>`<div class="plan-line"><div class="pl-icon" style="background:rgba(255,255,255,.1)">${l.icon}</div><div class="pl-text">${l.text}</div><div class="pl-date">${l.date}</div></div>`).join('');
+  document.getElementById('plan-card').innerHTML=`<div class="plan-title">Class ${selClass} · ${cd.g} · 2026–27</div><div class="plan-sub">${(cpCycleMode?effectiveWks<=CP1_WKS:fits)?'CP1 achievable. Hand this plan to your coordinator.':'Adjust — see suggestions above.'}</div><div class="plan-lines">${planLines}</div><div class="plan-actions"><button class="plan-btn primary" onclick="doPrint()">Download plan</button><button class="plan-btn ghost" onclick="copyPlan()">Copy summary</button><button class="plan-btn confirm" id="confirm-btn" onclick="window.confirmPlan()">✓ Confirm Plan</button></div><div id="confirm-status"></div>`;
+  window._currentPlan={selClass,schoolDays,mode,stu,subjWks,cp1Date,totalWks,fits,subjs,cpWindowMode,perDay,actDays,wkCap,sessionMin};
+}
+
+// ── PLANNER UTILITIES ─────────────────────────────────────────
+function copyPlan(){
+  const stu=+document.getElementById('stu').value||40;const cd=CD[selClass];
+  const sMin=Math.max(10,Math.round((stu/BASE_STU)*BASE_MIN));const actD=schoolDays-1;
+  const pD=mode==='ded'?Math.max(1,Math.floor(sMin/MIN_S)):4;const wkC=pD*actD;const wps=wkC>0?Math.ceil(stu/wkC):99;const tWks=wps*4;
+  const txt=`Assessment Plan — Class ${selClass} (${cd.g}) · Gujarat 2026–27\n${stu} students · ${sMin}-min session · ${pD} students/day\n${wps} wk/subject × 4 subjects = ${tWks} weeks\nSubjects: ${cd.subjs.map(s=>s.n).join(', ')}\nCP1 target: Week 8`;
+  navigator.clipboard?.writeText(txt).then(()=>alert('Plan copied to clipboard.'));
+}
+
+function doPrint(){
+  const stu=+document.getElementById('stu').value||40;const cd=CD[selClass];
+  const sMin=Math.max(10,Math.round((stu/BASE_STU)*BASE_MIN));const actD=schoolDays-1;
+  const lec=+document.getElementById('lec').value||4,len=+document.getElementById('len').value||45;
+  const pD=mode==='ded'?Math.max(1,Math.floor(sMin/MIN_S)):lec*embPerLec(len);
+  const wkC=pD*actD;const wps=wkC>0?Math.ceil(stu/wkC):99;const tWks=wps*4;
+  const fits=tWks<=8;const hrs=parseFloat(((stu*4*5)/60).toFixed(1));
+  const mLabel=mode==='ded'?`Dedicated ${sMin}-min slot`:`Within lecture (${len} min)`;
+  document.getElementById('pi').innerHTML=`<div style="padding-bottom:18px;margin-bottom:22px;border-bottom:2px solid #111"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin-bottom:8px">Assessment Planner · Gujarat GSHSEB 2026–27</div><div style="font-family:var(--font-display);font-size:32px;font-weight:300;letter-spacing:-.03em;margin-bottom:4px">Class ${selClass} — ${cd.g}</div><div style="font-size:12px;color:#666">${stu} students · ${schoolDays}-day week · ${mLabel}</div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px">${[[stu,'Students'],[sMin+'min','Session'],[pD+'/day','Assessed daily'],[tWks+'wk'+(fits?' ✓':' ⚠'),'CP1 in 8 wks']].map(([v,l])=>`<div style="border:1px solid #e9e7df;border-radius:8px;padding:13px"><div style="font-family:var(--font-display);font-size:22px;font-weight:300;color:${String(v).includes('⚠')?'#dc2626':String(v).includes('✓')?'#16a34a':'#111'}">${v}</div><div style="font-size:11px;color:#aaa;margin-top:2px">${l}</div></div>`).join('')}</div><div style="border:1px solid #e9e7df;border-radius:8px;overflow:hidden;margin-bottom:22px">${cd.subjs.map((s,i)=>`<div style="display:grid;grid-template-columns:12px 1fr 80px 80px;gap:12px;padding:12px 14px;border-bottom:1px solid #f0ede6;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:${s.h}"></div><div style="font-size:13px;font-weight:500">${s.n}</div><div style="font-size:12px;color:#666">${wps} wk${wps>1?'s':''}</div><div style="font-size:12px;font-weight:600;color:${(i+1)*wps<=8?'#16a34a':'#dc2626'};text-align:right">${(i+1)*wps<=8?'✓ before CP1':'after CP1'}</div></div>`).join('')}</div><div style="font-size:10px;color:#bbb;padding-top:14px;border-top:1px solid #eee;display:flex;justify-content:space-between"><span>Assessment Planner · Class ${selClass} · Gujarat GSHSEB 2026–27</span><span>${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</span></div>`;
+  document.getElementById('pv').style.display='block';document.body.style.overflow='hidden';
+}
+function hidePrint(){document.getElementById('pv').style.display='none';document.body.style.overflow='';}
+
+// ── PLANNER: CLASS BUTTON INIT ────────────────────────────────
+(function(){
+  const groups={Primary:[1,2,3,4,5],Middle:[6,7,8],Secondary:[9,10],'Higher Sec.':[11,12]};
+  const ids={Primary:'cg-primary',Middle:'cg-middle',Secondary:'cg-secondary','Higher Sec.':'cg-higher'};
+  Object.entries(groups).forEach(([g,cls])=>{
+    document.getElementById(ids[g]).innerHTML=cls.map(c=>`<button class="c-btn${c===selClass?' on':''}" data-cls="${c}" onclick="selectClass(${c})">${c}</button>`).join('');
+  });
+  activeSubjs=new Set(CD[selClass].subjs.map(s=>s.id));
+})();
+
+// ── INIT EVERYTHING ───────────────────────────────────────────
+go(); // render planner immediately
+
+(async function(){
   await loadData();
   renderAll();
   startAutoRefresh();
 })();
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy, limit, writeBatch, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig={apiKey:"AIzaSyC-0kK1L9wVTDSfiQmBVTw6Ul1_jAKqDKM",authDomain:"gujrat-project-6653d.firebaseapp.com",projectId:"gujrat-project-6653d",storageBucket:"gujrat-project-6653d.firebasestorage.app",messagingSenderId:"947525921677",appId:"1:947525921677:web:b1933167feeccd9ac2ebc4"};
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const SCHOOL_ID='demo-school';
+getDoc(doc(db,'schools',SCHOOL_ID)).catch(()=>{});
+
+window.confirmPlan=async function(){
+  const plan=window._currentPlan;if(!plan)return;
+  const btn=document.getElementById('confirm-btn');
+  const status=document.getElementById('confirm-status');
+  btn.textContent='Saving...';btn.disabled=true;status.innerHTML='';
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    const weekId=`${today}_class${plan.selClass}`;
+    const planStart=plan.subjWks[0]?.weeks[0]?.start?.toISOString().split('T')[0]||today;
+    btn.textContent='Fetching students...';
+    const snap=await getDocs(query(collection(db,'schools',SCHOOL_ID,'students'),orderBy('rollNo'),limit(plan.stu)));
+    let students;
+    if(!snap.empty){
+      students=snap.docs.map(d=>({id:d.id,name:d.data().name,level:d.data().level||'L1',gender:d.data().gender||'M',rollNo:d.data().rollNo,status:'pending',time_spent_seconds:0,last_question:''}));
+      for(let i=students.length;i<plan.stu;i++)students.push({id:`s${String(i+1).padStart(3,'0')}`,name:`Student ${i+1}`,level:'L1',gender:'M',rollNo:i+1,status:'pending',time_spent_seconds:0,last_question:''});
+    }else{
+      students=Array.from({length:plan.stu},(_,i)=>({id:`s${String(i+1).padStart(3,'0')}`,name:`Student ${i+1}`,level:'L1',gender:'M',rollNo:i+1,status:'pending',time_spent_seconds:0,last_question:''}));
+    }
+    btn.textContent='Saving plan...';
+    const batch=writeBatch(db);
+    batch.set(doc(db,'schools',SCHOOL_ID,'plan',weekId),{confirmedAt:serverTimestamp(),class:plan.selClass,schoolDays:plan.schoolDays,mode:plan.mode,studentCount:plan.stu,totalWeeks:plan.totalWks,cpWindow:plan.cpWindowMode,fits:plan.fits,subjects:plan.subjs.map(s=>({id:s.id,name:s.n,color:s.h})),perDay:plan.perDay,actDays:plan.actDays,wkCap:plan.wkCap,sessionMin:plan.sessionMin,planStart});
+    const firstSubj=plan.subjWks[0];
+    batch.set(doc(db,'schools',SCHOOL_ID,'meta','current_session'),{subject:firstSubj?.n||'Mathematics',subjectId:firstSubj?.id||'math',color:firstSubj?.h||'#d97706',class:plan.selClass,mode:plan.mode,studentCount:plan.stu,students,status:'active',planId:weekId,confirmedAt:serverTimestamp(),perDay:plan.perDay,actDays:plan.actDays,wkCap:plan.wkCap,sessionMin:plan.sessionMin,planStart});
+    let sessionCount=0;
+    for(const subj of plan.subjWks){for(const wk of subj.weeks){const dateStr=wk.start.toISOString().split('T')[0];batch.set(doc(db,'schools',SCHOOL_ID,'sessions',dateStr),{date:dateStr,subject:subj.n,subjectId:subj.id,color:subj.h,class:plan.selClass,mode:plan.mode,studentCount:plan.stu,status:'scheduled',planId:weekId,confirmedAt:serverTimestamp()});sessionCount++;}}
+    await batch.commit();
+    btn.textContent='✅ Plan Confirmed';btn.style.background='rgba(16,185,129,.2)';btn.style.color='#059669';
+    status.innerHTML=`<div style="margin-top:12px;padding:12px 16px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;font-size:13px;color:#059669;line-height:1.7"><strong>✓ Plan saved to Firebase</strong><br>${students.length} students · ${sessionCount} sessions · Student app updates immediately<br><span style="font-size:11px;opacity:.65">Plan ID: ${weekId}</span></div>`;
+  }catch(err){
+    console.error(err);btn.textContent='✗ Error — try again';btn.disabled=false;
+    status.innerHTML=`<div style="margin-top:8px;font-size:12px;color:var(--bad)">Error: ${err.message}</div>`;
+  }
+};
 </script>
 </body>
 </html>

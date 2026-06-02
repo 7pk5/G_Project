@@ -11,6 +11,7 @@ import socketserver
 import mimetypes
 import json
 import time
+import datetime
 import urllib.request
 from pathlib import Path
 
@@ -78,6 +79,71 @@ def fetch_session():
         return None
 
 
+# ── Daily student slicer ──
+# Replicates the Schedular's exact formula:
+#   sessionMin = max(10, round((stu / 40) * 50))
+#   perDay     = floor(sessionMin / 5)           [ded mode]
+#   actDays    = schoolDays - 1                  (buffer day excluded)
+#   wkCap      = perDay * actDays
+#   On day D of the plan:  students[D*perDay : (D+1)*perDay]
+
+def calc_day_info(session, all_students):
+    per_day    = int(session.get('perDay',   0))
+    act_days   = int(session.get('actDays',  4))
+    plan_start = session.get('planStart', '')
+
+    empty = {
+        'students': all_students, 'total': len(all_students),
+        'per_day': per_day, 'plan_day': None, 'plan_week': None,
+        'student_from': None, 'student_to': None,
+        'day_label': None, 'buffer_day': False,
+    }
+
+    if not per_day or not plan_start or not all_students:
+        return empty  # no formula data → show all (demo / old plan)
+
+    try:
+        start = datetime.date.fromisoformat(plan_start)
+        today = datetime.date.today()
+        delta = (today - start).days
+
+        if delta < 0:
+            return {**empty, 'students': [], 'day_label': 'Plan not started yet', 'buffer_day': False}
+
+        # plan_start is always a Monday, so delta%7 gives 0=Mon…6=Sun
+        week_num    = delta // 7
+        day_in_week = delta % 7
+
+        if day_in_week >= act_days:
+            label = 'Buffer day' if day_in_week == act_days else 'Weekend'
+            return {**empty, 'students': [], 'plan_week': week_num + 1,
+                    'day_label': label, 'buffer_day': True}
+
+        active_day  = week_num * act_days + day_in_week
+        start_idx   = active_day * per_day
+        end_idx     = min(start_idx + per_day, len(all_students))
+
+        if start_idx >= len(all_students):
+            return {**empty, 'students': [], 'plan_day': active_day + 1,
+                    'plan_week': week_num + 1, 'day_label': 'Subject complete',
+                    'buffer_day': False}
+
+        return {
+            'students':    all_students[start_idx:end_idx],
+            'total':       len(all_students),
+            'per_day':     per_day,
+            'plan_day':    active_day + 1,
+            'plan_week':   week_num + 1,
+            'student_from': start_idx + 1,
+            'student_to':   end_idx,
+            'day_label':   f'Week {week_num + 1} · Day {day_in_week + 1}',
+            'buffer_day':  False,
+        }
+    except Exception as e:
+        print(f'  [schedule] calc_day_info error: {e}')
+        return empty
+
+
 # ── Request handler ──
 
 class MikoHandler(http.server.BaseHTTPRequestHandler):
@@ -133,16 +199,26 @@ class MikoHandler(http.server.BaseHTTPRequestHandler):
         mock['total_days']  = 1
         mock['day_of_week'] = 1
 
+        mock['source'] = 'mock'  # overridden below when Firebase responds
+
         session = fetch_session()
         if session:
-            mock['subject'] = session.get('subject', mock.get('subject'))
-            mock['chapter'] = session.get('chapter', mock.get('chapter', ''))
+            # ── Inject Schedular plan fields ──
+            mock['subject']        = session.get('subject',  mock.get('subject'))
+            mock['chapter']        = session.get('chapter',  mock.get('chapter', ''))
+            mock['class']          = session.get('class',    mock.get('class', 5))
+            mock['color']          = session.get('color',    '#d97706')
+            mock['mode']           = session.get('mode',     'ded')
+            mock['session_status'] = session.get('status',   'active')
+            mock['plan_id']        = session.get('planId',   '')
+            mock['source']         = 'firebase'
 
-            raw_students = session.get('students', [])
+            # ── Build full student list from Firebase ──
+            raw_students  = session.get('students', [])
             student_count = session.get('studentCount', 0)
 
             if isinstance(raw_students, list) and len(raw_students) > 0:
-                mock['students'] = [
+                all_students = [
                     {
                         'id':                 str(s.get('id', f's{i+1:03d}')),
                         'name':               s.get('name', f'Student {i+1}'),
@@ -154,8 +230,7 @@ class MikoHandler(http.server.BaseHTTPRequestHandler):
                     for i, s in enumerate(raw_students)
                 ]
             elif student_count > 0:
-                # Firestore session exists but students array is empty — generate placeholders
-                mock['students'] = [
+                all_students = [
                     {
                         'id':                 f's{i+1:03d}',
                         'name':               f'Student {i+1}',
@@ -166,6 +241,23 @@ class MikoHandler(http.server.BaseHTTPRequestHandler):
                     }
                     for i in range(student_count)
                 ]
+            else:
+                all_students = mock.get('students', [])
+
+            # ── Slice to today's students using Schedular formula ──
+            day = calc_day_info(session, all_students)
+            mock['students']      = day['students']
+            mock['total_students']= day['total']
+            mock['per_day']       = day['per_day']
+            mock['plan_day']      = day['plan_day']
+            mock['plan_week']     = day['plan_week']
+            mock['student_from']  = day['student_from']
+            mock['student_to']    = day['student_to']
+            mock['day_label']     = day['day_label']
+            mock['buffer_day']    = day['buffer_day']
+
+            if day['per_day']:
+                print(f'  [schedule] {day["day_label"]} · students {day["student_from"]}–{day["student_to"]} of {day["total"]} · perDay={day["per_day"]}')
 
         self.send_json(mock)
 

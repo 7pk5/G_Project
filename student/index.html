@@ -1,111 +1,1194 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Miko · Student Session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+:root {
+  --bg:      #f4f6fb;
+  --surface: #ffffff;
+  --border:  #e2e6f0;
+  --ink:     #1a1d2e;
+  --ink2:    #4a4f6a;
+  --ink3:    #8b90a8;
+  --ok:      #16a34a;
+  --ok-bg:   #f0fdf4;
+  --bad:     #dc2626;
+  --blue:    #3b63f5;
+  --blue-bg: #eef2ff;
+  --font:    'Inter', system-ui, sans-serif;
+  --round:   'Nunito', system-ui, sans-serif;
+}
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
 
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="./">
+/* ── SCREENS ────────────────────────────────────────────────── */
+.screen {
+  position: fixed; inset: 0;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.screen.active { display: flex; }
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+/* ── LOADING ────────────────────────────────────────────────── */
+#s-loading { background: var(--bg); gap: 18px; }
 
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="student_ipad">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+.miko-mark {
+  font-family: var(--round);
+  font-size: 2.4rem; font-weight: 900;
+  letter-spacing: -.04em;
+  background: linear-gradient(135deg, #3b63f5, #7c3aed);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.spin-ring {
+  width: 38px; height: 38px;
+  border: 3px solid #e2e6f0;
+  border-top-color: #3b63f5;
+  border-radius: 50%;
+  animation: spin .75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.load-lbl { font-size: .85rem; color: var(--ink3); }
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+/* ── ERROR ──────────────────────────────────────────────────── */
+#s-error {
+  background: var(--bg); gap: 12px;
+  padding: 32px; text-align: center;
+}
+.e-icon  { font-size: 2.8rem; }
+.e-title { font-size: 1.1rem; font-weight: 700; }
+.e-msg   { font-size: .875rem; color: var(--ink3); max-width: 300px; line-height: 1.6; }
 
-  <title>student_ipad</title>
-  <link rel="manifest" href="manifest.json">
+/* ── NO SESSION ─────────────────────────────────────────────── */
+#s-nosession { background: var(--bg); }
+.ns-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 40px 32px;
+  max-width: 400px; width: calc(100% - 40px);
+  box-shadow: 0 8px 40px rgba(59,99,245,.08);
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px;
+  text-align: center;
+}
+.ns-icon  { font-size: 3rem; }
+.ns-title { font-family: var(--round); font-size: 1.5rem; font-weight: 900; color: var(--ink); }
+.ns-body  { font-size: .9rem; color: var(--ink3); line-height: 1.65; max-width: 280px; }
+.ns-hint  {
+  width: 100%; padding: 12px 16px;
+  background: var(--blue-bg); border-radius: 14px;
+  font-size: .82rem; color: var(--blue); line-height: 1.55; font-weight: 500;
+}
+
+/* ── SHARED BUTTON STYLES ───────────────────────────────────── */
+.btn-main {
+  width: 100%; padding: 17px;
+  background: linear-gradient(135deg, #3b63f5, #5b21b6);
+  color: #fff; border: none; border-radius: 16px;
+  font-family: var(--round); font-size: 1.05rem; font-weight: 800;
+  cursor: pointer; letter-spacing: .01em;
+  box-shadow: 0 4px 20px rgba(59,99,245,.35);
+  transition: transform .12s, box-shadow .12s;
+}
+.btn-main:active { transform: scale(.97); box-shadow: 0 2px 10px rgba(59,99,245,.25); }
+
+.btn-ghost {
+  width: 100%; padding: 14px;
+  background: transparent; color: var(--ink2);
+  border: 1.5px solid var(--border); border-radius: 14px;
+  font-family: var(--font); font-size: .95rem; font-weight: 600;
+  cursor: pointer; transition: background .15s;
+}
+.btn-ghost:active { background: var(--border); }
+
+.btn-retry {
+  padding: 12px 28px;
+  background: var(--ink); color: #fff;
+  border: none; border-radius: 12px;
+  font-family: var(--font); font-size: .95rem; font-weight: 600;
+  cursor: pointer; margin-top: 6px;
+}
+
+/* ── WELCOME SCREEN ─────────────────────────────────────────── */
+#s-welcome { background: var(--bg); padding: 20px; }
+
+.welcome-wrap {
+  max-width: 420px; width: 100%;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* Subject banner at top */
+.subj-banner {
+  border-radius: 22px;
+  padding: 20px 24px;
+  display: flex; align-items: center; gap: 16px;
+  position: relative; overflow: hidden;
+}
+.subj-banner::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, rgba(255,255,255,.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+.banner-miko { flex-shrink: 0; }
+.banner-info { flex: 1; color: #fff; }
+.banner-subject {
+  font-family: var(--round);
+  font-size: 1.6rem; font-weight: 900;
+  line-height: 1; margin-bottom: 4px;
+}
+.banner-chapter { font-size: .9rem; opacity: .85; font-weight: 500; }
+.banner-chips { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.banner-chip {
+  font-size: .75rem; font-weight: 700;
+  background: rgba(255,255,255,.22);
+  color: #fff; padding: 3px 10px;
+  border-radius: 100px; backdrop-filter: blur(4px);
+}
+
+/* Source badge */
+.src-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 100px;
+  font-size: .7rem; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+.src-badge.live { background: var(--ok-bg); color: var(--ok); border: 1px solid #bbf7d0; }
+.src-badge.demo { background: #f3f4f6; color: var(--ink3); border: 1px solid var(--border); }
+.src-dot { width: 6px; height: 6px; border-radius: 50%; }
+.live .src-dot { background: var(--ok); animation: blink 1.6s ease-in-out infinite; }
+.demo .src-dot { background: var(--ink3); }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+/* Today's schedule info card */
+.info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.info-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  font-size: .875rem;
+}
+.info-key { color: var(--ink3); font-weight: 500; }
+.info-val { color: var(--ink); font-weight: 700; }
+.lvl-pill {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 100px;
+  font-size: .75rem; font-weight: 800;
+}
+
+/* First student card */
+.first-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex; align-items: center; gap: 14px;
+}
+.first-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--round); font-size: 1rem; font-weight: 900;
+  color: #fff; flex-shrink: 0;
+}
+.first-info { flex: 1; }
+.first-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink3); margin-bottom: 3px; }
+.first-name  { font-size: 1.15rem; font-weight: 800; color: var(--ink); }
+
+/* ── SESSION SCREEN ─────────────────────────────────────────── */
+#s-session {
+  background: #12152a;
+  padding: 0; justify-content: flex-start;
+}
+
+/* Top bar */
+.q-topbar {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(18,21,42,.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  z-index: 20;
+}
+.q-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--round); font-size: .8rem; font-weight: 900;
+  color: #fff; flex-shrink: 0;
+}
+.q-student-name {
+  font-weight: 700; font-size: .95rem;
+  color: #fff; flex: 1;
+}
+.q-level {
+  padding: 3px 10px; border-radius: 100px;
+  font-size: .72rem; font-weight: 800;
+  background: rgba(255,255,255,.1); color: rgba(255,255,255,.8);
+}
+.q-subj-chip {
+  padding: 3px 10px; border-radius: 100px;
+  font-size: .72rem; font-weight: 800; color: #fff;
+}
+.q-step {
+  font-size: .72rem; font-weight: 600;
+  color: rgba(255,255,255,.4);
+}
+
+/* Session body */
+.q-body {
+  position: absolute;
+  top: 62px; bottom: 130px; left: 0; right: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 16px 24px; gap: 20px;
+  overflow: hidden;
+}
+
+/* Miko speaking avatar */
+.miko-speaker {
+  flex-shrink: 0;
+  position: relative;
+}
+.miko-ring {
+  position: absolute; inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(59,99,245,.4);
+  animation: ringPulse 2s ease-in-out infinite;
+}
+@keyframes ringPulse {
+  0%,100% { transform: scale(1); opacity: .4; }
+  50%      { transform: scale(1.12); opacity: .1; }
+}
+
+/* Speech bubble */
+.q-bubble {
+  width: 100%; max-width: 520px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 20px;
+  padding: 20px 24px;
+  backdrop-filter: blur(8px);
+}
+.q-stage-tag {
+  font-size: .65rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  margin-bottom: 10px;
+}
+.q-text {
+  font-size: 1.25rem; line-height: 1.6;
+  color: rgba(255,255,255,.95);
+  font-weight: 500;
+  min-height: 2.4em;
+}
+.q-thinking {
+  display: flex; gap: 7px; align-items: center;
+  padding: 6px 0;
+}
+.q-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(255,255,255,.3);
+  animation: tBounce 1.1s ease-in-out infinite;
+}
+.q-dot:nth-child(2) { animation-delay: .18s; }
+.q-dot:nth-child(3) { animation-delay: .36s; }
+@keyframes tBounce {
+  0%,80%,100% { transform: translateY(0); opacity: .3; }
+  40%          { transform: translateY(-7px); opacity: 1; }
+}
+
+/* Visual aid */
+.q-visual {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100px;
+}
+.choc-bar {
+  display: flex; gap: 6px;
+}
+.choc-piece {
+  width: 62px; height: 48px;
+  border-radius: 10px;
+  border: 2px solid rgba(0,0,0,.25);
+  transition: background .4s;
+}
+.choc-eaten     { background: #3d1a0a; }
+.choc-remaining { background: #b87333; }
+
+/* Session footer */
+.q-footer {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 20px max(20px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column;
+  align-items: center; gap: 12px;
+  background: linear-gradient(transparent, rgba(18,21,42,.98) 30%);
+}
+
+/* Progress steps */
+.q-steps {
+  display: flex; gap: 6px; align-items: center;
+}
+.q-step-dot {
+  height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,.15);
+  transition: all .3s ease;
+}
+.q-step-dot.done   { background: rgba(255,255,255,.45); width: 16px; }
+.q-step-dot.active { background: #fff; width: 28px; }
+.q-step-dot.ahead  { background: rgba(255,255,255,.15); width: 16px; }
+
+/* Tap button */
+.btn-tap {
+  width: 100%; max-width: 420px;
+  padding: 18px;
+  background: #fff; color: #12152a;
+  border: none; border-radius: 16px;
+  font-family: var(--round); font-size: 1rem; font-weight: 900;
+  cursor: pointer; letter-spacing: .01em;
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
+  transition: transform .12s, opacity .15s;
+}
+.btn-tap:not(:disabled):active { transform: scale(.97); }
+.btn-tap:disabled {
+  opacity: .2; cursor: default;
+  box-shadow: none;
+}
+
+/* ── LEVEL UP ───────────────────────────────────────────────── */
+#s-levelup {
+  background: radial-gradient(ellipse at 50% 30%, #4338ca, #1e1b4b 70%);
+  z-index: 300;
+  gap: 16px; padding: 40px;
+  text-align: center; color: #fff;
+  animation: zoomIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(.82); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.lu-emoji {
+  font-size: 4.5rem;
+  animation: floatUp 1.2s ease-in-out infinite alternate;
+  display: block;
+}
+@keyframes floatUp {
+  from { transform: translateY(0) rotate(-5deg); }
+  to   { transform: translateY(-12px) rotate(5deg); }
+}
+.lu-title {
+  font-family: var(--round);
+  font-size: 3rem; font-weight: 900;
+  text-shadow: 0 2px 20px rgba(99,102,241,.6);
+}
+.lu-change {
+  display: flex; align-items: center; gap: 16px;
+  font-size: 1.6rem; font-weight: 900;
+}
+.lu-from {
+  padding: 8px 22px; border-radius: 100px;
+  background: rgba(255,255,255,.15);
+  font-size: 1.3rem;
+}
+.lu-arrow { font-size: 1.6rem; opacity: .6; }
+.lu-to {
+  padding: 8px 22px; border-radius: 100px;
+  background: #fff; color: #312e81;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 20px rgba(255,255,255,.25);
+}
+.lu-msg {
+  font-size: 1rem; opacity: .75;
+  max-width: 280px; line-height: 1.6; font-weight: 500;
+}
+/* confetti dots */
+.confetti {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.cf {
+  position: absolute;
+  width: 8px; height: 8px; border-radius: 2px;
+  animation: fall linear infinite;
+}
+@keyframes fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── BETWEEN STUDENTS ───────────────────────────────────────── */
+#s-next { background: var(--bg); }
+.next-wrap {
+  max-width: 400px; width: calc(100% - 40px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px; padding: 36px 28px;
+  box-shadow: 0 8px 40px rgba(59,99,245,.07);
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px;
+  animation: slideUp .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.done-ring {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.9rem;
+  box-shadow: 0 6px 24px rgba(22,163,74,.35);
+}
+.done-txt { font-size: 1rem; color: var(--ink3); font-weight: 500; }
+.done-txt b { color: var(--ink); font-weight: 800; }
+.nx-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+.nx-section { width: 100%; text-align: center; }
+.nx-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ink3); margin-bottom: 10px; }
+.nx-avatar-wrap {
+  display: flex; justify-content: center; margin-bottom: 10px;
+}
+.nx-avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--round); font-size: 1.1rem; font-weight: 900;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+}
+.nx-name { font-size: 1.4rem; font-weight: 800; color: var(--ink); margin-bottom: 6px; }
+.nx-meta { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.nx-progress { font-size: .8rem; color: var(--ink3); font-weight: 500; }
+
+/* ── SESSION COMPLETE ───────────────────────────────────────── */
+#s-complete { background: var(--bg); padding: 20px; }
+.cmp-wrap {
+  max-width: 420px; width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px; padding: 32px 28px;
+  box-shadow: 0 8px 40px rgba(59,99,245,.07);
+  display: flex; flex-direction: column; gap: 20px;
+  animation: slideUp .35s cubic-bezier(.34,1.56,.64,1);
+}
+.cmp-top {
+  display: flex; align-items: center; gap: 16px;
+}
+.cmp-icon-ring {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(22,163,74,.3);
+}
+.cmp-title { font-family: var(--round); font-size: 1.5rem; font-weight: 900; color: var(--ink); }
+.cmp-sub   { font-size: .85rem; color: var(--ink3); margin-top: 3px; font-weight: 500; }
+
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.stat-tile {
+  background: var(--bg); border-radius: 16px;
+  padding: 18px; text-align: center;
+  border: 1px solid var(--border);
+}
+.stat-num {
+  font-family: var(--round);
+  font-size: 2.2rem; font-weight: 900;
+  color: var(--ink); line-height: 1;
+}
+.stat-lbl { font-size: .78rem; color: var(--ink3); margin-top: 4px; font-weight: 600; }
+
+.lu-list { display: flex; flex-direction: column; gap: 8px; }
+.lu-list-hd {
+  font-size: .7rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .09em;
+  color: var(--ink3);
+}
+.lu-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--ok-bg); border-radius: 12px;
+  padding: 10px 14px;
+}
+.lu-row-name { flex: 1; font-weight: 700; font-size: .9rem; color: var(--ink); }
+.lu-row-change {
+  font-size: .85rem; font-weight: 800; color: var(--ok);
+  display: flex; align-items: center; gap: 4px;
+}
+</style>
 </head>
 <body>
 
-  <!-- Data status banner — visible until Flutter renders, hides after 8s -->
-  <div id="miko-status" style="
-    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
-    background:rgba(17,17,16,0.88); color:#fff;
-    font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;
-    font-size:13px; font-weight:500;
-    padding:10px 20px; border-radius:99px;
-    display:flex; align-items:center; gap:10px;
-    z-index:9999; backdrop-filter:blur(8px);
-    transition:opacity .4s; pointer-events:none;">
-    <span id="miko-status-dot" style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;animation:mikoPulse 1.2s ease-in-out infinite"></span>
-    <span id="miko-status-text">Connecting to Firestore…</span>
+<!-- ── LOADING ───────────────────────────────────────────────── -->
+<div id="s-loading" class="screen active">
+  <div class="miko-mark">miko</div>
+  <div class="spin-ring"></div>
+  <div class="load-lbl">Loading today's session…</div>
+</div>
+
+<!-- ── ERROR ─────────────────────────────────────────────────── -->
+<div id="s-error" class="screen">
+  <div class="e-icon">⚠️</div>
+  <div class="e-title">Couldn't load session</div>
+  <div class="e-msg" id="err-msg">Please check your connection and try again.</div>
+  <button class="btn-retry" onclick="init()">Try Again</button>
+</div>
+
+<!-- ── NO SESSION ────────────────────────────────────────────── -->
+<div id="s-nosession" class="screen">
+  <div class="ns-card">
+    <div class="ns-icon" id="ns-icon">📋</div>
+    <div class="ns-title" id="ns-title">No Session Today</div>
+    <div class="ns-body"  id="ns-body">The teacher hasn't confirmed today's plan yet.</div>
+    <div class="ns-hint"  id="ns-hint" style="display:none"></div>
+    <button class="btn-main" style="margin-top:4px" onclick="init()">Check Again</button>
+  </div>
+</div>
+
+<!-- ── WELCOME ───────────────────────────────────────────────── -->
+<div id="s-welcome" class="screen">
+  <div class="welcome-wrap">
+
+    <!-- Subject banner -->
+    <div class="subj-banner" id="w-banner">
+      <div class="banner-miko">
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <rect x="12" y="28" width="28" height="18" rx="6" fill="rgba(255,255,255,.15)"/>
+          <rect x="10" y="10" width="32" height="22" rx="8" fill="rgba(255,255,255,.2)"/>
+          <rect x="24" y="4" width="4" height="7" rx="2" fill="rgba(255,255,255,.3)"/>
+          <circle cx="26" cy="3" r="3" fill="rgba(255,255,255,.7)"/>
+          <rect x="14" y="16" width="9" height="6" rx="3" fill="rgba(255,255,255,.9)"/>
+          <rect x="29" y="16" width="9" height="6" rx="3" fill="rgba(255,255,255,.9)"/>
+          <circle cx="18.5" cy="18.5" r="1.5" fill="rgba(0,0,0,.4)"/>
+          <circle cx="33.5" cy="18.5" r="1.5" fill="rgba(0,0,0,.4)"/>
+          <path d="M19 27 Q26 31 33 27" stroke="rgba(255,255,255,.7)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          <rect x="18" y="34" width="7" height="5" rx="2" fill="rgba(255,255,255,.25)"/>
+          <rect x="27" y="34" width="7" height="5" rx="2" fill="rgba(255,255,255,.25)"/>
+        </svg>
+      </div>
+      <div class="banner-info">
+        <div class="banner-subject" id="w-subject">Mathematics</div>
+        <div class="banner-chapter" id="w-chapter"></div>
+        <div class="banner-chips" id="w-chips"></div>
+      </div>
+    </div>
+
+    <!-- Source + info -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding: 0 2px;">
+      <div class="src-badge demo" id="w-src-badge">
+        <div class="src-dot"></div>
+        <span id="w-src-label">Demo</span>
+      </div>
+      <div style="font-size:.8rem; color:var(--ink3); font-weight:500;" id="w-date"></div>
+    </div>
+
+    <!-- Session info -->
+    <div class="info-card" id="w-info"></div>
+
+    <!-- First student -->
+    <div class="first-card" id="w-first-card">
+      <div class="first-avatar" id="w-first-avatar">A</div>
+      <div class="first-info">
+        <div class="first-label">First up</div>
+        <div class="first-name" id="w-first-name">—</div>
+      </div>
+      <div class="lvl-pill" id="w-first-level" style="background:#eef2ff;color:#3b63f5">L1</div>
+    </div>
+
+    <button class="btn-main" onclick="beginSession()">Begin Session →</button>
+  </div>
+</div>
+
+<!-- ── SESSION (QUIZ) ─────────────────────────────────────────── -->
+<div id="s-session" class="screen">
+
+  <!-- Top bar -->
+  <div class="q-topbar">
+    <div class="q-avatar" id="q-avatar">A</div>
+    <div class="q-student-name" id="q-name">—</div>
+    <div class="q-level" id="q-level">L1</div>
+    <div class="q-subj-chip" id="q-subj">Math</div>
+    <div class="q-step" id="q-step">1/6</div>
   </div>
 
-  <style>
-    @keyframes mikoPulse {
-      0%,100%{opacity:1} 50%{opacity:.35}
+  <!-- Body -->
+  <div class="q-body">
+
+    <!-- Miko speaking avatar -->
+    <div class="miko-speaker" id="q-miko-wrap">
+      <div class="miko-ring" id="q-ring"></div>
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+        <rect x="18" y="44" width="44" height="26" rx="8" fill="#1e2d6b"/>
+        <rect x="14" y="14" width="52" height="34" rx="12" fill="#1a2a7a"/>
+        <rect x="37" y="6" width="6" height="9" rx="3" fill="#3b4f8a"/>
+        <circle cx="40" cy="4" r="4" fill="#3b63f5"/>
+        <rect id="q-eye-l" x="22" y="22" width="14" height="10" rx="5" fill="#3b63f5"/>
+        <rect id="q-eye-r" x="44" y="22" width="14" height="10" rx="5" fill="#3b63f5"/>
+        <circle cx="29" cy="26" r="2.5" fill="#fff" opacity=".8"/>
+        <circle cx="51" cy="26" r="2.5" fill="#fff" opacity=".8"/>
+        <path id="q-mouth" d="M28 39 Q40 47 52 39" stroke="#5b7ff5" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <rect x="26" y="54" width="12" height="8" rx="3" fill="#3b63f5" opacity=".6"/>
+        <rect x="42" y="54" width="12" height="8" rx="3" fill="#3b63f5" opacity=".6"/>
+        <rect x="8"  y="22" width="8" height="14" rx="4" fill="#1a2a7a"/>
+        <rect x="64" y="22" width="8" height="14" rx="4" fill="#1a2a7a"/>
+      </svg>
+    </div>
+
+    <!-- Speech bubble -->
+    <div class="q-bubble">
+      <div class="q-stage-tag" id="q-stage-tag">GREETING</div>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-thinking" id="q-thinking" style="display:none">
+        <div class="q-dot"></div>
+        <div class="q-dot"></div>
+        <div class="q-dot"></div>
+      </div>
+    </div>
+
+    <!-- Visual aid -->
+    <div class="q-visual" id="q-visual"></div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="q-footer">
+    <div class="q-steps" id="q-steps"></div>
+    <button class="btn-tap" id="btn-tap" onclick="tapHandler()">Tap when student answers</button>
+  </div>
+
+</div>
+
+<!-- ── LEVEL UP ───────────────────────────────────────────────── -->
+<div id="s-levelup" class="screen">
+  <div class="confetti" id="confetti"></div>
+  <span class="lu-emoji">🌟</span>
+  <div class="lu-title">Level Up!</div>
+  <div class="lu-change">
+    <span class="lu-from" id="lu-from">L2</span>
+    <span class="lu-arrow">→</span>
+    <span class="lu-to"   id="lu-to">L3</span>
+  </div>
+  <div class="lu-msg" id="lu-msg">Excellent work!</div>
+</div>
+
+<!-- ── BETWEEN STUDENTS ──────────────────────────────────────── -->
+<div id="s-next" class="screen">
+  <div class="next-wrap">
+    <div class="done-ring">✅</div>
+    <div class="done-txt"><b id="nx-done">Aarav</b> is done!</div>
+
+    <div class="nx-divider"></div>
+
+    <div class="nx-section">
+      <div class="nx-label">Next up</div>
+      <div class="nx-avatar-wrap">
+        <div class="nx-avatar" id="nx-avatar">D</div>
+      </div>
+      <div class="nx-name" id="nx-name">—</div>
+      <div class="nx-meta">
+        <div class="lvl-pill" id="nx-level" style="background:#eef2ff;color:#3b63f5">L1</div>
+        <div class="nx-progress" id="nx-progress"></div>
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="startNextStudent()">Next Student →</button>
+  </div>
+</div>
+
+<!-- ── SESSION COMPLETE ───────────────────────────────────────── -->
+<div id="s-complete" class="screen" style="padding:20px;">
+  <div class="cmp-wrap">
+    <div class="cmp-top">
+      <div class="cmp-icon-ring">🎉</div>
+      <div>
+        <div class="cmp-title">Session Complete!</div>
+        <div class="cmp-sub" id="cmp-sub">All students assessed</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-tile">
+        <div class="stat-num" id="cmp-done">0</div>
+        <div class="stat-lbl">Students Done</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-num" id="cmp-lus">0</div>
+        <div class="stat-lbl">Level Ups</div>
+      </div>
+    </div>
+
+    <div class="lu-list" id="cmp-lu-list" style="display:none">
+      <div class="lu-list-hd">Level Ups Today</div>
+      <div id="cmp-lu-items"></div>
+    </div>
+
+    <button class="btn-ghost" onclick="init()">← Start New Session</button>
+  </div>
+</div>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────
+const SUBJ_COLOR = {
+  'Mathematics':    '#d97706',
+  'Science':        '#059669',
+  'Language':       '#3b63f5',
+  'Social Studies': '#7c3aed',
+};
+const AVATAR_COLORS = ['#E85D55','#4A3FB7','#1D9E75','#EF9F27','#9B59B6','#E67E22','#1ABC9C','#e11d48'];
+const LEVELS = ['L1','L2','L3','L4'];
+
+// ── State ─────────────────────────────────────────────────────
+const S = {
+  session: null, dialogue: null, students: [],
+  idx: 0, stage: 0, levelUps: [],
+  audio: new Audio(), timer: null,
+};
+
+// ── Screen ────────────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+}
+
+// ── Firebase REST ─────────────────────────────────────────────
+const FS_PROJECT = 'gujrat-project-6653d';
+const FS_KEY     = 'AIzaSyC-0kK1L9wVTDSfiQmBVTw6Ul1_jAKqDKM';
+const FS_BASE    = `https://firestore.googleapis.com/v1/projects/${FS_PROJECT}/databases/(default)/documents`;
+const FS_SCHOOL  = 'demo-school';
+
+function fsVal(v) {
+  if (!v || typeof v !== 'object') return null;
+  if ('stringValue'    in v) return v.stringValue;
+  if ('integerValue'   in v) return parseInt(v.integerValue, 10);
+  if ('doubleValue'    in v) return v.doubleValue;
+  if ('booleanValue'   in v) return v.booleanValue;
+  if ('timestampValue' in v) return v.timestampValue;
+  if ('nullValue'      in v) return null;
+  if ('arrayValue'     in v) return (v.arrayValue.values || []).map(fsVal);
+  if ('mapValue'       in v) return fsDoc(v.mapValue);
+  return null;
+}
+function fsDoc(doc) {
+  if (!doc || !doc.fields) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(doc.fields)) out[k] = fsVal(v);
+  return out;
+}
+async function fsGet(path) {
+  const res = await fetch(`${FS_BASE}${path}?key=${FS_KEY}`, { cache: 'no-cache' });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('Firestore ' + res.status);
+  return fsDoc(await res.json());
+}
+
+// ── Day slicer ────────────────────────────────────────────────
+function calcDayInfo(fb, all) {
+  const perDay  = parseInt(fb.perDay  || 0);
+  const actDays = parseInt(fb.actDays || 4);
+  const ps      = fb.planStart || '';
+  const fallback = { students: all, total: all.length, per_day: perDay, plan_day: null, plan_week: null, student_from: null, student_to: null, day_label: null, buffer_day: false };
+  if (!perDay || !ps || !all.length) return fallback;
+  try {
+    const start = new Date(ps + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const delta = Math.round((today - start) / 86400000);
+    if (delta < 0) {
+      const end = Math.min(perDay, all.length);
+      return { ...fallback, students: all.slice(0, end), student_from: 1, student_to: end, plan_day: 1, plan_week: 1, day_label: 'Preview · Plan starts ' + ps };
     }
-  </style>
+    const wk  = Math.floor(delta / 7);
+    const dow = delta % 7;
+    if (dow >= actDays) return { ...fallback, students: [], plan_week: wk + 1, day_label: dow === actDays ? 'Buffer day' : 'Weekend', buffer_day: true };
+    const ad  = wk * actDays + dow;
+    const si  = ad * perDay;
+    const ei  = Math.min(si + perDay, all.length);
+    if (si >= all.length) return { ...fallback, students: [], plan_day: ad+1, plan_week: wk+1, day_label: 'Subject complete', buffer_day: false };
+    return { students: all.slice(si, ei), total: all.length, per_day: perDay, plan_day: ad+1, plan_week: wk+1, student_from: si+1, student_to: ei, day_label: `Week ${wk+1} · Day ${dow+1}`, buffer_day: false };
+  } catch (e) { return fallback; }
+}
 
-  <script src="flutter_bootstrap.js" async></script>
+// ── Init ──────────────────────────────────────────────────────
+async function init() {
+  show('loading');
+  S.audio.pause(); clearTimeout(S.timer);
 
-  <script>
-    const _statusEl   = document.getElementById('miko-status');
-    const _statusDot  = document.getElementById('miko-status-dot');
-    const _statusText = document.getElementById('miko-status-text');
-    let   _hideTimer  = null;
+  let session = null, dialogue = null;
 
-    function mikoSetStatus(dot, text, autoHide) {
-      _statusDot.style.background  = dot;
-      _statusDot.style.animation   = autoHide ? 'none' : 'mikoPulse 1.2s ease-in-out infinite';
-      _statusText.textContent = text;
-      clearTimeout(_hideTimer);
-      if (autoHide) {
-        _hideTimer = setTimeout(() => { _statusEl.style.opacity = '0'; }, autoHide);
-      }
+  // 1. Direct Firebase
+  try {
+    const fb = await fsGet(`/schools/${FS_SCHOOL}/meta/current_session`);
+    if (fb && fb.subject) {
+      const raw = Array.isArray(fb.students) ? fb.students : [];
+      const all = raw.map((s, i) => ({
+        id: String(s.id || `s${String(i+1).padStart(3,'0')}`),
+        name: s.name || `Student ${i+1}`,
+        level: s.level || 'L1',
+        status: 'pending', time_spent_seconds: 0, last_question: '',
+      }));
+      const day = calcDayInfo(fb, all);
+      session = {
+        date: new Date().toISOString().split('T')[0],
+        subject: fb.subject, chapter: fb.chapter || '',
+        class: fb.class,
+        color: fb.color || SUBJ_COLOR[fb.subject] || '#d97706',
+        mode: fb.mode || 'ded',
+        session_status: fb.status || 'active',
+        source: 'firebase',
+        students: day.students,
+        total_students: day.total,
+        per_day: day.per_day,
+        plan_day: day.plan_day, plan_week: day.plan_week,
+        student_from: day.student_from, student_to: day.student_to,
+        day_label: day.day_label, buffer_day: day.buffer_day,
+      };
+      console.log(`[Miko] Firebase ✓ → ${session.subject} · ${session.students.length} students today`);
     }
+  } catch (e) { console.warn('[Miko] Firebase:', e.message); }
 
-    // Register the Miko bridge service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/student/miko-bridge-sw.js', { scope: '/student/' })
-        .then(reg => {
-          console.log('[MikoBridge] Service worker registered');
-          // Force update if a new version is waiting
-          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          reg.addEventListener('updatefound', () => {
-            const nw = reg.installing;
-            nw.addEventListener('statechange', () => {
-              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                nw.postMessage({ type: 'SKIP_WAITING' });
-              }
-            });
-          });
-        })
-        .catch(err => {
-          console.warn('[MikoBridge] SW registration failed:', err);
-          mikoSetStatus('#dc2626', 'Service worker failed — using demo data', 6000);
-        });
+  // 2. Server JSON fallback
+  if (!session) {
+    try {
+      session = await getJSON('assets/packages/shared_core/assets/mock/today_session.json');
+      console.log(`[Miko] Server JSON → ${session.subject} (${session.source || 'mock'})`);
+    } catch (e) { console.warn('[Miko] Server JSON:', e.message); }
+  }
 
-      // Listen for data-load status messages from the service worker
-      navigator.serviceWorker.addEventListener('message', e => {
-        if (e.data?.type !== 'MIKO_DATA_STATUS') return;
-        const { source, count, subject, error } = e.data;
-        if (source === 'firestore') {
-          mikoSetStatus('#16a34a', `${count} students loaded · ${subject}`, 5000);
-        } else {
-          mikoSetStatus('#EF9F27', `Demo data (${count} students) — no plan confirmed yet`, 7000);
-        }
-      });
-    } else {
-      mikoSetStatus('#dc2626', 'Service workers not supported in this browser', 8000);
+  // 3. Dialogue
+  try {
+    dialogue = await getJSON('assets/packages/shared_core/assets/mock/simulated_session_dialogue.json');
+  } catch (e) { console.warn('[Miko] Dialogue:', e.message); }
+
+  if (!session || !dialogue) {
+    document.getElementById('err-msg').textContent = 'Could not load session from Firebase or server.';
+    show('error'); return;
+  }
+
+  S.session  = session; S.dialogue = dialogue;
+  S.students = (session.students || []).filter(s => s.status !== 'absent');
+  S.idx = 0; S.stage = 0; S.levelUps = [];
+
+  if (session.source === 'firebase' && session.buffer_day) { renderNoSession(session); show('nosession'); return; }
+  if (session.source === 'firebase' && session.session_status !== 'active') { renderNoSession(session); show('nosession'); return; }
+  if (S.students.length === 0) { renderNoSession(session); show('nosession'); return; }
+
+  renderWelcome(); show('welcome');
+}
+
+async function getJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+// ── No-session ────────────────────────────────────────────────
+function renderNoSession(session) {
+  const label = session.day_label || '';
+  let icon = '📋', title = 'No Session Today', body = 'The teacher hasn\'t confirmed today\'s plan yet.', hint = '';
+  if (session.buffer_day && label === 'Buffer day') {
+    icon = '☕'; title = 'Buffer Day'; body = 'Today is a buffer / rest day. No assessments scheduled.';
+    hint = session.student_to ? `Next: continue from Student ${session.student_to + 1} tomorrow.` : '';
+  } else if (label === 'Weekend') {
+    icon = '🌤'; title = 'Weekend!'; body = 'No sessions on weekends. See you Monday!'; hint = '';
+  } else if (label === 'Subject complete') {
+    icon = '✅'; title = 'Subject Complete!'; body = `All students for <b>${session.subject}</b> have been assessed.`;
+    hint = 'Ask the teacher to confirm the next subject in the Planner.';
+  } else if (session.session_status === 'scheduled') {
+    icon = '📅'; title = 'Not Today'; body = `This session is scheduled but today isn't an assessment day.`;
+  }
+  document.getElementById('ns-icon').textContent  = icon;
+  document.getElementById('ns-title').textContent = title;
+  document.getElementById('ns-body').innerHTML    = body;
+  const hintEl = document.getElementById('ns-hint');
+  if (hint) { hintEl.innerHTML = hint; hintEl.style.display = 'block'; }
+  else hintEl.style.display = 'none';
+}
+
+// ── Welcome ───────────────────────────────────────────────────
+function renderWelcome() {
+  const s     = S.session;
+  const color = s.color || SUBJ_COLOR[s.subject] || '#d97706';
+  const isLive = s.source === 'firebase';
+
+  // Banner
+  document.getElementById('w-banner').style.background = `linear-gradient(135deg, ${color}, ${color}cc)`;
+  document.getElementById('w-subject').textContent = s.subject || '—';
+  document.getElementById('w-chapter').textContent = s.chapter || '';
+  const chips = [];
+  if (s.class) chips.push('Class ' + s.class);
+  if (s.day_label) chips.push(s.day_label);
+  document.getElementById('w-chips').innerHTML = chips.map(c => `<span class="banner-chip">${c}</span>`).join('');
+
+  // Source badge
+  const badge = document.getElementById('w-src-badge');
+  badge.className = 'src-badge ' + (isLive ? 'live' : 'demo');
+  document.getElementById('w-src-label').textContent = isLive ? 'Live · Confirmed' : 'Demo mode';
+
+  // Date
+  document.getElementById('w-date').textContent = fmtDate(s.date || new Date().toISOString().split('T')[0]);
+
+  // Info card
+  const todayCount = S.students.length;
+  const totalCount = s.total_students || todayCount;
+  const fromIdx = s.student_from, toIdx = s.student_to;
+  let stuLine = `<span style="font-weight:700;color:var(--ink)">${todayCount}</span>`;
+  if (isLive && fromIdx && totalCount > (s.per_day || todayCount)) {
+    stuLine += ` <span style="color:var(--ink3);font-weight:500;font-size:.8rem">(${fromIdx}–${toIdx} of ${totalCount})</span>`;
+  }
+  document.getElementById('w-info').innerHTML = `
+    <div class="info-row"><span class="info-key">Today's students</span><span>${stuLine}</span></div>
+    ${s.plan_week ? `<div class="info-row"><span class="info-key">Week</span><span class="info-val">Week ${s.plan_week}</span></div>` : ''}
+    ${s.per_day   ? `<div class="info-row"><span class="info-key">Per day</span><span class="info-val">${s.per_day} students</span></div>` : ''}
+  `;
+
+  // First student
+  const first = S.students[0];
+  if (first) {
+    const bg = AVATAR_COLORS[0];
+    const initials = first.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('w-first-avatar').textContent = initials;
+    document.getElementById('w-first-avatar').style.background = bg;
+    document.getElementById('w-first-name').textContent  = first.name;
+    const lp = document.getElementById('w-first-level');
+    lp.textContent = first.level || 'L1';
+    lp.style.background = color + '20';
+    lp.style.color = color;
+  }
+}
+
+function fmtDate(d) {
+  try {
+    return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  } catch (_) { return d; }
+}
+
+// ── Session flow ──────────────────────────────────────────────
+function beginSession() { S.idx = 0; S.stage = 0; startStudent(); }
+
+function startStudent() {
+  if (!S.students[S.idx]) { showComplete(); return; }
+  S.stage = 0;
+  renderHeader(S.students[S.idx]);
+  renderStage();
+  show('session');
+}
+
+function renderHeader(student) {
+  const color    = AVATAR_COLORS[S.idx % AVATAR_COLORS.length];
+  const initials = student.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  const subColor = S.session.color || SUBJ_COLOR[S.session.subject] || '#3b63f5';
+
+  const av = document.getElementById('q-avatar');
+  av.textContent = initials; av.style.background = color;
+
+  document.getElementById('q-name').textContent  = student.name.split(' ')[0];
+  document.getElementById('q-level').textContent = student.level || 'L1';
+
+  const chip = document.getElementById('q-subj');
+  chip.textContent = S.session.subject;
+  chip.style.background = subColor + '25';
+  chip.style.color = subColor;
+}
+
+function renderStage() {
+  clearTimeout(S.timer);
+  const stg = S.dialogue[S.stage];
+  if (!stg) { finishStudent(); return; }
+
+  const firstName = S.students[S.idx].name.split(' ')[0];
+  const text      = (stg.text || '').replace(/\bAarav\b/g, firstName);
+  const isEval    = stg.stage.startsWith('evaluating');
+
+  // Stage label + step counter
+  document.getElementById('q-stage-tag').textContent = stg.stage.toUpperCase().replace(/_/g, ' ');
+  document.getElementById('q-step').textContent = `${S.stage + 1} / ${S.dialogue.length}`;
+
+  // Text / thinking
+  document.getElementById('q-text').textContent     = isEval ? '' : text;
+  document.getElementById('q-thinking').style.display = isEval ? 'flex' : 'none';
+
+  // Miko eyes animate when evaluating
+  const ring = document.getElementById('q-ring');
+  ring.style.animationDuration = isEval ? '0.6s' : '2s';
+  ring.style.borderColor = isEval ? 'rgba(251,191,36,.5)' : 'rgba(59,99,245,.4)';
+
+  renderVisual(stg.visual_aid);
+  renderSteps();
+
+  const btn = document.getElementById('btn-tap');
+  btn.disabled    = !stg.requires_tap;
+  btn.textContent = stg.requires_tap ? 'Tap when student answers' : 'Please wait…';
+
+  if (stg.audio_file) playAudio('assets/assets/audio/' + stg.audio_file);
+  else S.audio.pause();
+
+  if (!stg.requires_tap && stg.duration_ms) {
+    S.timer = setTimeout(() => {
+      if (stg.triggers_level_up) showLevelUp();
+      else nextStage();
+    }, stg.duration_ms);
+  }
+}
+
+function tapHandler() {
+  const stg = S.dialogue[S.stage];
+  if (!stg || !stg.requires_tap) return;
+  nextStage();
+}
+
+function nextStage() {
+  clearTimeout(S.timer);
+  S.stage++;
+  if (S.stage >= S.dialogue.length) finishStudent();
+  else renderStage();
+}
+
+// ── Level up ──────────────────────────────────────────────────
+function showLevelUp() {
+  const student = S.students[S.idx];
+  const fi      = LEVELS.indexOf(student.level);
+  const toLvl   = fi >= 0 && fi < LEVELS.length - 1 ? LEVELS[fi + 1] : student.level;
+
+  document.getElementById('lu-from').textContent = student.level;
+  document.getElementById('lu-to').textContent   = toLvl;
+  document.getElementById('lu-msg').textContent  = student.name.split(' ')[0] + ' really understands ' + (S.session.chapter || S.session.subject) + '!';
+
+  S.levelUps.push({ name: student.name.split(' ')[0], from: student.level, to: toLvl });
+  student.level = toLvl;
+  document.getElementById('q-level').textContent = toLvl;
+
+  buildConfetti();
+  show('levelup');
+  setTimeout(() => { show('session'); renderHeader(S.students[S.idx]); nextStage(); }, 2800);
+}
+
+function buildConfetti() {
+  const el    = document.getElementById('confetti');
+  const colors = ['#fbbf24','#f472b6','#34d399','#60a5fa','#c084fc','#fb923c'];
+  el.innerHTML = Array.from({ length: 24 }, (_, i) => {
+    const c = colors[i % colors.length];
+    const l = Math.random() * 100, d = Math.random() * 3 + 1, del = Math.random() * 2;
+    return `<div class="cf" style="left:${l}%;background:${c};animation-duration:${d}s;animation-delay:${del}s;width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;border-radius:${Math.random()>0.5?'50%':'3px'}"></div>`;
+  }).join('');
+}
+
+// ── Between students ──────────────────────────────────────────
+function finishStudent() {
+  S.audio.pause(); clearTimeout(S.timer);
+  const done = S.students[S.idx];
+  const next = S.students[S.idx + 1];
+  if (!next) { showComplete(); return; }
+
+  document.getElementById('nx-done').textContent = done.name.split(' ')[0];
+
+  const nextColor  = AVATAR_COLORS[(S.idx + 1) % AVATAR_COLORS.length];
+  const nextInit   = next.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  const av = document.getElementById('nx-avatar');
+  av.textContent = nextInit; av.style.background = nextColor;
+
+  document.getElementById('nx-name').textContent = next.name;
+  const lp = document.getElementById('nx-level');
+  const subColor = S.session.color || '#3b63f5';
+  lp.textContent = next.level || 'L1';
+  lp.style.background = subColor + '20'; lp.style.color = subColor;
+
+  document.getElementById('nx-progress').textContent = `${S.idx + 2} of ${S.students.length}`;
+  show('next');
+}
+
+function startNextStudent() { S.idx++; S.stage = 0; startStudent(); }
+
+// ── Complete ──────────────────────────────────────────────────
+function showComplete() {
+  const total = S.students.length;
+  document.getElementById('cmp-done').textContent = total;
+  document.getElementById('cmp-lus').textContent  = S.levelUps.length;
+  document.getElementById('cmp-sub').textContent  =
+    S.session.subject + (S.session.chapter ? ' · ' + S.session.chapter : '') + ' · ' + total + ' students';
+
+  const list = document.getElementById('cmp-lu-list');
+  const items = document.getElementById('cmp-lu-items');
+  if (S.levelUps.length > 0) {
+    items.innerHTML = S.levelUps.map(lu =>
+      `<div class="lu-row">
+         <span class="lu-row-name">${lu.name}</span>
+         <span class="lu-row-change">${lu.from} → ${lu.to} ↑</span>
+       </div>`
+    ).join('');
+    list.style.display = 'flex';
+  } else { list.style.display = 'none'; }
+  show('complete');
+}
+
+// ── Visual aids ───────────────────────────────────────────────
+function renderVisual(aid) {
+  const el = document.getElementById('q-visual');
+  el.innerHTML = '';
+  if (!aid) return;
+
+  if (aid === 'chocolate_4_2' || aid === 'chocolate_4_3') {
+    const eaten = aid === 'chocolate_4_2' ? 2 : 3;
+    const bar = document.createElement('div');
+    bar.className = 'choc-bar';
+    for (let i = 0; i < 4; i++) {
+      const p = document.createElement('div');
+      p.className = 'choc-piece ' + (i < eaten ? 'choc-eaten' : 'choc-remaining');
+      bar.appendChild(p);
     }
-  </script>
+    el.appendChild(bar);
+
+    // Caption
+    const cap = document.createElement('div');
+    cap.style.cssText = 'margin-top:8px;font-size:.78rem;color:rgba(255,255,255,.4);text-align:center;font-weight:500;';
+    cap.textContent = `${eaten} out of 4 pieces eaten`;
+    el.appendChild(cap);
+
+  } else if (aid === 'star_burst') {
+    el.innerHTML = `<div style="text-align:center">
+      <div style="font-size:3.5rem;animation:floatUp 1s ease-in-out infinite alternate">⭐</div>
+      <div style="font-size:.8rem;color:rgba(255,255,255,.4);margin-top:6px;font-weight:500">Excellent work!</div>
+    </div>`;
+  }
+}
+
+// ── Progress steps ────────────────────────────────────────────
+function renderSteps() {
+  const el    = document.getElementById('q-steps');
+  const total = S.dialogue.length;
+  el.innerHTML = Array.from({ length: total }, (_, i) => {
+    const cls = i === S.stage ? 'q-step-dot active' : i < S.stage ? 'q-step-dot done' : 'q-step-dot ahead';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+// ── Audio ─────────────────────────────────────────────────────
+function playAudio(src) {
+  S.audio.pause(); S.audio.src = src; S.audio.load();
+  S.audio.play().catch(() => {});
+}
+
+// ── Boot ──────────────────────────────────────────────────────
+init();
+</script>
 </body>
 </html>
