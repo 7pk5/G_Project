@@ -377,6 +377,82 @@ html, body {
   box-shadow: none; cursor: default;
 }
 
+/* ── MCQ OPTIONS — same as test_student.html ────────────────── */
+.assess-wrap { width: 100%; margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+
+.mcq-option {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  transition: all .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.mcq-option:hover  { background: var(--blue-bg); border-color: var(--blue); }
+.mcq-option.sel    { background: var(--blue-bg); border-color: var(--blue); box-shadow: 0 4px 14px rgba(59,99,245,.14); }
+.mcq-star {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--border); color: var(--ink3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; flex-shrink: 0; transition: all .2s;
+}
+.mcq-option.sel .mcq-star { background: var(--blue); color: #fff; }
+.mcq-label { font-family: var(--round); font-size: 1rem; font-weight: 800; color: var(--ink); flex: 1; }
+.mcq-emoji { font-size: 1.4rem; }
+
+/* Word unscramble */
+.scramble-wrap { display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%; }
+.scramble-answer {
+  display: flex; gap: 8px; min-height: 48px;
+  padding: 10px 16px;
+  background: var(--bg); border: 2px dashed var(--border);
+  border-radius: 14px; width: 100%;
+  flex-wrap: wrap; align-items: center; justify-content: center;
+}
+.scramble-answer.has-letters { border-color: var(--blue); background: var(--blue-bg); }
+.letter-tile {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: #fff; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--round); font-size: 1rem; font-weight: 900;
+  color: var(--ink); cursor: pointer;
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.letter-tile:hover { border-color: var(--blue); background: var(--blue-bg); }
+.letter-tile.placed { background: var(--blue); border-color: var(--blue); color: #fff; }
+.letter-tile.used { opacity: .2; pointer-events: none; }
+.scramble-source { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.scramble-hint { font-size: .8rem; color: var(--ink3); font-weight: 600; text-align: center; }
+
+/* Drag-buckets */
+.buckets-wrap { display: flex; gap: 10px; width: 100%; }
+.bucket-zone {
+  flex: 1; min-height: 90px;
+  background: var(--bg); border: 2px dashed var(--border);
+  border-radius: 14px; padding: 10px;
+  transition: all .2s;
+}
+.bucket-zone.over { background: var(--blue-bg); border-color: var(--blue); }
+.bucket-zone-label {
+  font-size: .7rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--ink3); text-align: center; margin-bottom: 8px;
+}
+.drag-items-source { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
+.drag-tile {
+  padding: 10px 16px; border-radius: 10px;
+  background: var(--surface); border: 2px solid var(--border);
+  font-family: var(--round); font-size: .9rem; font-weight: 800;
+  color: var(--ink); cursor: grab;
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.drag-tile:hover { border-color: var(--blue); background: var(--blue-bg); }
+.drag-tile.dragging { opacity: .4; }
+.bucket-tile { padding: 6px 12px; border-radius: 8px; background: var(--blue); color: #fff; font-size: .85rem; font-weight: 700; margin: 3px; display: inline-block; }
+
 /* ── LEVEL UP ───────────────────────────────────────────────── */
 #s-levelup {
   background: radial-gradient(ellipse at 50% 30%, #4338ca, #1e1b4b 70%);
@@ -967,6 +1043,223 @@ function fmtDate(d) {
   } catch (_) { return d; }
 }
 
+// ── Assessment data for each requires_tap stage ───────────────
+// Maps stage name → assessment type + options (mirrors test_student.html types)
+const ASSESSMENTS = {
+
+  // Stage: question_1 → touch-image MCQ (4 fraction choices)
+  question_1: {
+    type: 'mcq',
+    options: [
+      { label: '1 out of 4  (1/4)', emoji: '🍫',         correct: false },
+      { label: '2 out of 4  (2/4)', emoji: '🍫🍫',       correct: true  },
+      { label: '3 out of 4  (3/4)', emoji: '🍫🍫🍫',     correct: false },
+      { label: '4 out of 4  (4/4)', emoji: '🍫🍫🍫🍫',   correct: false },
+    ]
+  },
+
+  // Stage: follow_up → word-unscramble (spell the fraction word)
+  follow_up: {
+    type: 'unscramble',
+    word: 'THREE',
+    scrambled: ['E','H','R','E','T'],
+    hint: 'Spell the fraction: ___ out of four'
+  },
+
+};
+
+// State for current assessment interaction
+let S_assess = { selected: null, placed: [], usedIdx: [] };
+
+function resetAssessState() {
+  S_assess = { selected: null, placed: [], usedIdx: [] };
+}
+
+// ── Render assessment for a requires_tap stage ────────────────
+function renderAssessment(stg) {
+  const data = ASSESSMENTS[stg.stage];
+  if (!data) return;               // no interactive assessment for this stage
+
+  const container = document.createElement('div');
+  container.className = 'assess-wrap';
+
+  if (data.type === 'mcq') {
+    renderMCQ(container, data.options);
+  } else if (data.type === 'unscramble') {
+    renderUnscramble(container, data);
+  } else if (data.type === 'drag-buckets') {
+    renderDragBuckets(container, data);
+  }
+
+  document.getElementById('q-visual').appendChild(container);
+}
+
+// ── MCQ (touch-image) — same as test_student.html ─────────────
+function renderMCQ(container, options) {
+  const LETTERS = ['A','B','C','D'];
+  options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'mcq-option';
+    div.innerHTML = `
+      <div class="mcq-star">${LETTERS[i]}</div>
+      <span class="mcq-emoji">${opt.emoji || ''}</span>
+      <span class="mcq-label">${opt.label}</span>
+    `;
+    div.onclick = () => {
+      container.querySelectorAll('.mcq-option').forEach((o, j) => {
+        o.classList.remove('sel');
+        o.querySelector('.mcq-star').textContent = LETTERS[j];
+      });
+      div.classList.add('sel');
+      div.querySelector('.mcq-star').textContent = '✓';
+      S_assess.selected = i;
+      updateTapBtn();
+    };
+    container.appendChild(div);
+  });
+}
+
+// ── Word unscramble — same as test_student.html ───────────────
+function renderUnscramble(container, data) {
+  container.innerHTML = `
+    <div class="scramble-wrap">
+      <div class="scramble-hint">${data.hint}</div>
+      <div class="scramble-answer" id="sc-answer"></div>
+      <div class="scramble-source" id="sc-source"></div>
+      <div class="scramble-hint" style="color:var(--blue);font-size:.75rem">Tap letters to build the word</div>
+    </div>`;
+
+  const answerEl = container.querySelector('#sc-answer');
+  const sourceEl = container.querySelector('#sc-source');
+
+  function refreshAnswer() {
+    answerEl.innerHTML = '';
+    answerEl.classList.toggle('has-letters', S_assess.placed.length > 0);
+    S_assess.placed.forEach((letter, pos) => {
+      const t = document.createElement('div');
+      t.className = 'letter-tile placed';
+      t.textContent = letter;
+      t.onclick = () => {
+        S_assess.placed.splice(pos, 1);
+        const srcIdx = S_assess.usedIdx.indexOf(letter + pos);
+        // find first unused tile with same letter to restore
+        refreshSource();
+        refreshAnswer();
+        checkUnscrambleComplete(data.word);
+      };
+      answerEl.appendChild(t);
+    });
+  }
+
+  function refreshSource() {
+    sourceEl.innerHTML = '';
+    const usedCounts = {};
+    S_assess.placed.forEach(l => usedCounts[l] = (usedCounts[l] || 0) + 1);
+    const remaining = [...data.scrambled];
+    S_assess.placed.forEach(l => {
+      const i = remaining.indexOf(l);
+      if (i !== -1) remaining.splice(i, 1);
+    });
+    [...data.scrambled].forEach((letter, i) => {
+      const t = document.createElement('div');
+      const isUsed = !remaining.includes(letter) &&
+        (() => { const idx = remaining.indexOf(letter); if (idx !== -1) { remaining.splice(idx, 1); return false; } return true; })();
+      t.className = 'letter-tile' + (isUsed ? ' used' : '');
+      t.textContent = letter;
+      t.onclick = () => {
+        if (t.classList.contains('used')) return;
+        S_assess.placed.push(letter);
+        refreshSource();
+        refreshAnswer();
+        checkUnscrambleComplete(data.word);
+      };
+      sourceEl.appendChild(t);
+    });
+  }
+
+  refreshSource();
+  refreshAnswer();
+}
+
+function checkUnscrambleComplete(word) {
+  if (S_assess.placed.join('') === word) {
+    S_assess.selected = true;
+    updateTapBtn();
+  }
+}
+
+// ── Drag-buckets — same as test_student.html ──────────────────
+function renderDragBuckets(container, data) {
+  const itemsDiv = document.createElement('div');
+  itemsDiv.className = 'drag-items-source';
+
+  const bucketsDiv = document.createElement('div');
+  bucketsDiv.className = 'buckets-wrap';
+
+  data.buckets.forEach(b => {
+    const zone = document.createElement('div');
+    zone.className = 'bucket-zone';
+    zone.dataset.id = b.id;
+    zone.innerHTML = `<div class="bucket-zone-label">${b.label}</div>`;
+    zone.ondragover = e => { e.preventDefault(); zone.classList.add('over'); };
+    zone.ondragleave = () => zone.classList.remove('over');
+    zone.ondrop = e => {
+      e.preventDefault();
+      zone.classList.remove('over');
+      const item = data.items.find(it => it.value === e.dataTransfer.getData('text'));
+      if (!item) return;
+      const tile = document.createElement('span');
+      tile.className = 'bucket-tile';
+      tile.textContent = item.label;
+      zone.appendChild(tile);
+      const src = itemsDiv.querySelector(`[data-value="${item.value}"]`);
+      if (src) src.classList.add('used');
+      // Check if all placed
+      const placed = document.querySelectorAll('.bucket-tile').length;
+      if (placed >= data.items.length) { S_assess.selected = true; updateTapBtn(); }
+    };
+    bucketsDiv.appendChild(zone);
+  });
+
+  data.items.forEach(item => {
+    const tile = document.createElement('div');
+    tile.className = 'drag-tile';
+    tile.textContent = item.label;
+    tile.draggable = true;
+    tile.dataset.value = item.value;
+    tile.ondragstart = e => {
+      e.dataTransfer.setData('text', item.value);
+      tile.classList.add('dragging');
+    };
+    tile.ondragend = () => tile.classList.remove('dragging');
+    // Touch support
+    tile.ontouchstart = e => tile._touchStart = e.touches[0];
+    tile.ontouchend  = e => {
+      const touch = e.changedTouches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.bucket-zone');
+      if (el) {
+        const fake = new DragEvent('drop', { dataTransfer: new DataTransfer() });
+        fake.dataTransfer.setData('text', item.value);
+        el.dispatchEvent(fake);
+        tile.classList.add('used');
+      }
+    };
+    itemsDiv.appendChild(tile);
+  });
+
+  container.appendChild(itemsDiv);
+  container.appendChild(bucketsDiv);
+}
+
+// ── Update tap button label after answer interaction ──────────
+function updateTapBtn() {
+  const btn = document.getElementById('btn-tap');
+  if (!btn || btn.disabled) return;
+  if (S_assess.selected !== null) {
+    btn.textContent = 'Confirm Answer →';
+  }
+}
+
 // ── Session flow ──────────────────────────────────────────────
 function beginSession() { S.idx = 0; S.stage = 0; startStudent(); }
 
@@ -1004,6 +1297,9 @@ function renderStage() {
   const text      = (stg.text || '').replace(/\bAarav\b/g, firstName);
   const isEval    = stg.stage.startsWith('evaluating');
 
+  // Reset assessment state for new stage
+  resetAssessState();
+
   // Stage label + step counter
   document.getElementById('q-stage-tag').textContent = stg.stage.toUpperCase().replace(/_/g, ' ');
   document.getElementById('q-step').textContent = `${S.stage + 1} / ${S.dialogue.length}`;
@@ -1012,9 +1308,10 @@ function renderStage() {
   document.getElementById('q-text').textContent     = isEval ? '' : text;
   document.getElementById('q-thinking').style.display = isEval ? 'flex' : 'none';
 
-  // (Miko ring removed — now using light card layout)
-
+  // Render visual aid first, then append interactive assessment below it
   renderVisual(stg.visual_aid);
+  if (stg.requires_tap) renderAssessment(stg);
+
   renderSteps();
 
   const btn = document.getElementById('btn-tap');
