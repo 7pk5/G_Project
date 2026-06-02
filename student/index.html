@@ -216,55 +216,7 @@ html, body {
 .first-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink3); margin-bottom: 3px; }
 .first-name  { font-size: 1.15rem; font-weight: 800; color: var(--ink); }
 
-/* ── SESSION SCREEN — matches test_student.html quiz design ──── */
-#s-session {
-  background: var(--bg);
-  padding: 0; justify-content: flex-start;
-}
-
-/* Top bar — light white */
-.q-topbar {
-  position: absolute; top: 0; left: 0; right: 0;
-  padding: 12px 16px;
-  display: flex; align-items: center; gap: 10px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-  z-index: 20;
-  box-shadow: 0 2px 8px rgba(59,99,245,.05);
-}
-.q-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--round); font-size: .8rem; font-weight: 900;
-  color: #fff; flex-shrink: 0;
-}
-.q-student-name {
-  font-weight: 700; font-size: .95rem;
-  color: var(--ink); flex: 1;
-}
-.q-level {
-  padding: 3px 10px; border-radius: 100px;
-  font-size: .72rem; font-weight: 800;
-  background: var(--blue-bg); color: var(--blue);
-}
-.q-subj-chip {
-  padding: 3px 10px; border-radius: 100px;
-  font-size: .72rem; font-weight: 800;
-}
-.q-step {
-  font-size: .72rem; font-weight: 700;
-  color: var(--ink3);
-}
-
-/* Session body — light container, centers the arena card */
-.q-body {
-  position: absolute;
-  top: 62px; bottom: 86px; left: 0; right: 0;
-  display: flex; flex-direction: column;
-  align-items: stretch;
-  padding: 16px;
-  overflow-y: auto;
-}
+/* (old session CSS removed — new one is below) */
 
 /* Arena card — exact match to test_student.html .answer-arena */
 .q-arena {
@@ -454,8 +406,16 @@ html, body {
 .bucket-tile { padding: 6px 12px; border-radius: 8px; background: var(--blue); color: #fff; font-size: .85rem; font-weight: 700; margin: 3px; display: inline-block; }
 
 /* ── STUDENT LIST SCREEN ────────────────────────────────────── */
-#s-roster { background: var(--bg); padding: 20px; overflow-y: auto; justify-content: flex-start; }
-.roster-wrap { max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px; }
+#s-roster {
+  background: var(--bg);
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 16px max(20px, env(safe-area-inset-bottom));
+}
+.roster-wrap { max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
 .roster-header { text-align: center; padding: 8px 0 4px; }
 .roster-title { font-family: var(--round); font-size: 1.6rem; font-weight: 900; color: var(--ink); }
 .roster-sub { font-size: .875rem; color: var(--ink3); margin-top: 4px; font-weight: 500; }
@@ -491,18 +451,53 @@ html, body {
 }
 .session-timer.urgent { background: #fef2f2; color: #dc2626; }
 
-/* ── SESSION SCREEN — copied 1:1 from test_student.html ──────── */
-#s-session { background: var(--bg); padding: 0; flex-direction: column; align-items: stretch; overflow-y: auto; justify-content: flex-start; }
+/* ── SESSION SCREEN — proper flex layout ──────────────────────── */
+/* #s-session fills viewport, never scrolls itself */
+#s-session {
+  background: var(--bg);
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden;
+}
 
-.q-topbar { padding: 12px 16px; display: flex; align-items: center; gap: 10px; background: #fff; border-bottom: 1px solid var(--border); z-index: 20; box-shadow: 0 2px 8px rgba(59,99,245,.05); flex-shrink: 0; }
+/* Topbar — fixed height, never shrinks */
+.q-topbar {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(59,99,245,.05);
+}
 .q-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--round); font-size: .8rem; font-weight: 900; color: #fff; flex-shrink: 0; }
-.q-student-name { font-weight: 700; font-size: .95rem; color: var(--ink); flex: 1; }
-.q-level { padding: 3px 10px; border-radius: 100px; font-size: .72rem; font-weight: 800; background: var(--blue-bg); color: var(--blue); }
+.q-student-name { font-weight: 700; font-size: .95rem; color: var(--ink); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-level { padding: 3px 10px; border-radius: 100px; font-size: .72rem; font-weight: 800; background: var(--blue-bg); color: var(--blue); flex-shrink: 0; }
 
-.quiz-body { width: 100%; padding: 16px 16px max(16px,env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; }
+/* quiz-body — takes all remaining height, scrolls internally */
+.quiz-body {
+  flex: 1;
+  min-height: 0;               /* critical — lets flex child shrink below content size */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 12px max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-/* answer-arena — exact copy */
-.answer-arena { background: white; border: 2px solid #e2e8f0; border-radius: 24px; padding: 28px 24px; box-shadow: 0 8px 30px rgba(59,99,245,.06); display: flex; flex-direction: column; justify-content: space-between; width: 100%; max-width: 720px; min-height: 75vh; }
+/* answer-arena — fills quiz-body height, no fixed min-height */
+.answer-arena {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 20px 18px;
+  box-shadow: 0 6px 24px rgba(59,99,245,.06);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  width: 100%; max-width: 680px;
+  flex: 1; min-height: 0;      /* fills quiz-body, no overflow */
+}
 .arena-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .arena-steps-text { font-size: 14px; font-weight: 800; color: var(--ink3); }
 .arena-subject-badge { background: var(--blue-bg); color: var(--blue); font-size: 11px; font-weight: 900; padding: 4px 12px; border-radius: 99px; text-transform: uppercase; }
@@ -742,6 +737,55 @@ html, body {
 .lu-row-change {
   font-size: .85rem; font-weight: 800; color: var(--ok);
   display: flex; align-items: center; gap: 4px;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Session arena */
+  .answer-arena   { padding: 16px 14px; border-radius: 16px; }
+  .arena-top      { margin-bottom: 8px; }
+  .progress-bar-bg{ margin-bottom: 14px; }
+  .question-card  { gap: 10px; margin-bottom: 14px; }
+  .question-text  { font-size: 1.05rem; }
+  .interface-zone { min-height: 100px; margin-bottom: 12px; }
+
+  /* MCQ */
+  .mcq-option   { padding: 12px 14px; gap: 10px; border-radius: 12px; }
+  .mcq-star     { width: 28px; height: 28px; font-size: 11px; }
+  .mcq-text     { font-size: 13px; }
+  .mcq-emoji    { font-size: 1.2rem; }
+
+  /* Image MCQ */
+  .image-mcq-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .image-option   { padding: 16px 10px; border-radius: 14px; }
+  .image-graphic  { font-size: 30px; }
+  .image-label    { font-size: 12px; }
+
+  /* Unscramble */
+  .letter-tile  { width: 34px; height: 34px; font-size: .9rem; }
+
+  /* Action row */
+  .action-row { padding-top: 12px; }
+  .btn-action-outline { padding: 9px 14px; font-size: 12px; }
+  .btn-action-primary { padding: 11px 20px; font-size: 13px; }
+
+  /* Roster */
+  .roster-title { font-size: 1.3rem; }
+  .roster-card  { padding: 12px 14px; }
+}
+
+@media (max-width: 360px) {
+  .question-text { font-size: .95rem; }
+  .mcq-option    { padding: 10px 12px; }
+  .image-mcq-grid{ grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .letter-tile   { width: 30px; height: 30px; font-size: .82rem; }
+}
+
+@media (min-width: 768px) {
+  /* Tablet — slightly more breathing room */
+  .answer-arena { padding: 28px 28px; }
+  .question-text{ font-size: 1.35rem; }
+  .mcq-option   { padding: 18px 22px; }
 }
 </style>
 </head>
@@ -1211,30 +1255,109 @@ function fmtDate(d) {
   } catch (_) { return d; }
 }
 
-// ── Assessment data for each requires_tap stage ───────────────
-// Maps stage name → assessment type + options (mirrors test_student.html types)
-const ASSESSMENTS = {
+// ── Assessment question BANK (shuffled per student) ───────────
+// Each pool entry = one question set for a stage.
+// S.assessmentSet is picked randomly when a student starts.
 
-  // Stage: question_1 → touch-image MCQ (4 fraction choices)
-  question_1: {
-    type: 'mcq',
-    options: [
-      { label: '1 out of 4  (1/4)', emoji: '🍫',         correct: false },
-      { label: '2 out of 4  (2/4)', emoji: '🍫🍫',       correct: true  },
-      { label: '3 out of 4  (3/4)', emoji: '🍫🍫🍫',     correct: false },
-      { label: '4 out of 4  (4/4)', emoji: '🍫🍫🍫🍫',   correct: false },
-    ]
-  },
+const QUESTION_BANK = {
 
-  // Stage: follow_up → word-unscramble (spell the fraction word)
-  follow_up: {
-    type: 'unscramble',
-    word: 'THREE',
-    scrambled: ['E','H','R','E','T'],
-    hint: 'Spell the fraction: ___ out of four'
-  },
+  // ── Pool for stage: question_1 ──────────────────────────────
+  question_1: [
+    // Q-A: Fraction eaten (MCQ)
+    {
+      type: 'mcq',
+      options: [
+        { label: '1/4 — one piece',  emoji: '🍫',       correct: false },
+        { label: '2/4 — two pieces', emoji: '🍫🍫',     correct: true  },
+        { label: '3/4 — three',      emoji: '🍫🍫🍫',   correct: false },
+        { label: '4/4 — all of it',  emoji: '🍫🍫🍫🍫', correct: false },
+      ]
+    },
+    // Q-B: Image MCQ — pick correct fraction symbol
+    {
+      type: 'image-mcq',
+      options: [
+        { label: '1/4', graphic: '¼', correct: false },
+        { label: '1/2', graphic: '½', correct: true  },
+        { label: '3/4', graphic: '¾', correct: false },
+        { label: '1',   graphic: '1', correct: false },
+      ]
+    },
+    // Q-C: MCQ — which fraction is "half"?
+    {
+      type: 'mcq',
+      options: [
+        { label: '1 out of 3',  emoji: '🟦', correct: false },
+        { label: '2 out of 4',  emoji: '🟩', correct: true  },
+        { label: '3 out of 5',  emoji: '🟧', correct: false },
+        { label: '1 out of 10', emoji: '🟥', correct: false },
+      ]
+    },
+    // Q-D: MCQ with pizza theme
+    {
+      type: 'mcq',
+      options: [
+        { label: '0/4 — none eaten', emoji: '🍕', correct: false },
+        { label: '2/4 — half eaten', emoji: '🍕🍕', correct: true  },
+        { label: '3/4 — most eaten', emoji: '🍕🍕🍕', correct: false },
+        { label: '4/4 — all eaten',  emoji: '🍕🍕🍕🍕', correct: false },
+      ]
+    },
+  ],
+
+  // ── Pool for stage: follow_up ───────────────────────────────
+  follow_up: [
+    // F-A: Unscramble "THREE"
+    {
+      type: 'unscramble',
+      word: 'THREE',
+      scrambled: ['E','H','R','E','T'],
+      hint: 'Spell the number: 3 out of 4 = ___ quarters'
+    },
+    // F-B: Unscramble "HALF"
+    {
+      type: 'unscramble',
+      word: 'HALF',
+      scrambled: ['L','A','H','F'],
+      hint: 'Spell the word for 2 out of 4'
+    },
+    // F-C: Unscramble "EQUAL"
+    {
+      type: 'unscramble',
+      word: 'EQUAL',
+      scrambled: ['U','A','E','Q','L'],
+      hint: '2/4 and 1/2 are ___ fractions'
+    },
+    // F-D: Drag-buckets — sort fractions
+    {
+      type: 'drag-buckets',
+      buckets: [
+        { id: 'less', label: '< Half (less)' },
+        { id: 'more', label: '> Half (more)' },
+      ],
+      items: [
+        { label: '1/4', value: '1_4', target: 'less', emoji: '🟦' },
+        { label: '3/4', value: '3_4', target: 'more', emoji: '🟩' },
+        { label: '1/3', value: '1_3', target: 'less', emoji: '🟧' },
+        { label: '2/3', value: '2_3', target: 'more', emoji: '🟥' },
+      ]
+    },
+  ],
 
 };
+
+// Pick a random question set per student and store it
+function pickAssessmentSet() {
+  const set = {};
+  for (const stage of Object.keys(QUESTION_BANK)) {
+    const pool = QUESTION_BANK[stage];
+    set[stage] = pool[Math.floor(Math.random() * pool.length)];
+  }
+  return set;
+}
+
+// Current student's assessment set (set when student starts)
+let CURRENT_ASSESSMENTS = {};
 
 // State for current assessment interaction
 let S_assess = { selected: null, placed: [], usedIdx: [] };
@@ -1245,19 +1368,16 @@ function resetAssessState() {
 
 // ── Render assessment for a requires_tap stage ────────────────
 function renderAssessment(stg) {
-  const data = ASSESSMENTS[stg.stage];
+  const data = CURRENT_ASSESSMENTS[stg.stage];
   if (!data) return;               // no interactive assessment for this stage
 
   const container = document.createElement('div');
   container.className = 'assess-wrap';
 
-  if (data.type === 'mcq') {
-    renderMCQ(container, data.options);
-  } else if (data.type === 'unscramble') {
-    renderUnscramble(container, data);
-  } else if (data.type === 'drag-buckets') {
-    renderDragBuckets(container, data);
-  }
+  if      (data.type === 'mcq')         renderMCQ(container, data.options);
+  else if (data.type === 'image-mcq')   renderImageMCQ(container, data.options);
+  else if (data.type === 'unscramble')  renderUnscramble(container, data);
+  else if (data.type === 'drag-buckets') renderDragBuckets(container, data);
 
   document.getElementById('dynamic-interface-zone').appendChild(container);
 }
@@ -1285,6 +1405,27 @@ function renderMCQ(container, options) {
     };
     container.appendChild(div);
   });
+}
+
+// ── Image MCQ (touch-image) — grid of large graphic options ───
+function renderImageMCQ(container, options) {
+  const grid = document.createElement('div');
+  grid.className = 'image-mcq-grid';
+  options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'image-option';
+    div.innerHTML = `
+      <div class="image-graphic">${opt.graphic || opt.emoji || opt.img || '?'}</div>
+      <div class="image-label">${opt.label}</div>`;
+    div.onclick = () => {
+      grid.querySelectorAll('.image-option').forEach(o => o.classList.remove('selected'));
+      div.classList.add('selected');
+      S_assess.selected = i;
+      updateTapBtn();
+    };
+    grid.appendChild(div);
+  });
+  container.appendChild(grid);
 }
 
 // ── Word unscramble — same as test_student.html ───────────────
@@ -1506,6 +1647,7 @@ function beginSession() { S.idx = 0; S.stage = 0; startStudent(); }
 function startStudent() {
   if (!S.students[S.idx]) { showComplete(); return; }
   S.stage = 0;
+  CURRENT_ASSESSMENTS = pickAssessmentSet();  // new random set per student
   renderHeader(S.students[S.idx]);
   renderStage();
   startSessionTimer();
