@@ -453,6 +453,44 @@ html, body {
 .drag-tile.dragging { opacity: .4; }
 .bucket-tile { padding: 6px 12px; border-radius: 8px; background: var(--blue); color: #fff; font-size: .85rem; font-weight: 700; margin: 3px; display: inline-block; }
 
+/* ── STUDENT LIST SCREEN ────────────────────────────────────── */
+#s-roster { background: var(--bg); padding: 20px; overflow-y: auto; justify-content: flex-start; }
+.roster-wrap { max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px; }
+.roster-header { text-align: center; padding: 8px 0 4px; }
+.roster-title { font-family: var(--round); font-size: 1.6rem; font-weight: 900; color: var(--ink); }
+.roster-sub { font-size: .875rem; color: var(--ink3); margin-top: 4px; font-weight: 500; }
+.roster-list { display: flex; flex-direction: column; gap: 8px; }
+.roster-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: 14px 18px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 2px 8px rgba(59,99,245,.04);
+}
+.roster-num { width: 28px; height: 28px; border-radius: 50%; background: var(--blue-bg); color: var(--blue); font-size: .8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.roster-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--round); font-size: .85rem; font-weight: 900; color: #fff; flex-shrink: 0; }
+.roster-info { flex: 1; }
+.roster-name { font-weight: 700; font-size: .95rem; color: var(--ink); }
+.roster-level { font-size: .78rem; font-weight: 700; color: var(--ink3); margin-top: 2px; }
+.roster-status { padding: 3px 10px; border-radius: 100px; font-size: .72rem; font-weight: 800; background: var(--blue-bg); color: var(--blue); }
+
+/* ── BETWEEN STUDENTS FILLER ────────────────────────────────── */
+#s-filler { background: linear-gradient(135deg, #1e1b4b, #312e81); color: #fff; gap: 16px; text-align: center; }
+.filler-count { font-family: var(--round); font-size: 4rem; font-weight: 900; line-height: 1; }
+.filler-label { font-size: 1rem; opacity: .7; font-weight: 500; }
+.filler-next  { font-size: 1.4rem; font-weight: 800; }
+.filler-bar-bg { width: 200px; height: 6px; background: rgba(255,255,255,.2); border-radius: 3px; overflow: hidden; }
+.filler-bar-fill { height: 100%; background: #fff; border-radius: 3px; transition: width 1s linear; }
+
+/* ── SESSION TIMER ──────────────────────────────────────────── */
+.session-timer {
+  padding: 4px 14px; border-radius: 100px;
+  font-size: .8rem; font-weight: 800;
+  background: rgba(59,99,245,.1); color: var(--blue);
+  font-family: monospace; letter-spacing: .05em;
+  transition: background .3s, color .3s;
+}
+.session-timer.urgent { background: #fef2f2; color: #dc2626; }
+
 /* ── SESSION SCREEN — copied 1:1 from test_student.html ──────── */
 #s-session { background: var(--bg); padding: 0; flex-direction: column; align-items: stretch; overflow-y: auto; justify-content: flex-start; }
 
@@ -735,6 +773,26 @@ html, body {
   </div>
 </div>
 
+<!-- ── STUDENT ROSTER (shown before session starts) ──────────── -->
+<div id="s-roster" class="screen">
+  <div class="roster-wrap">
+    <div class="roster-header">
+      <div class="roster-title" id="ro-title">Today's Students</div>
+      <div class="roster-sub"  id="ro-sub">Loading…</div>
+    </div>
+    <div class="roster-list" id="ro-list"></div>
+    <button class="btn-main" onclick="beginSession()">▶ Start Assessment</button>
+  </div>
+</div>
+
+<!-- ── BETWEEN-STUDENTS FILLER (5 sec auto countdown) ─────────── -->
+<div id="s-filler" class="screen">
+  <div class="filler-count" id="fi-count">5</div>
+  <div class="filler-label">Next student in</div>
+  <div class="filler-next" id="fi-next">Loading…</div>
+  <div class="filler-bar-bg"><div class="filler-bar-fill" id="fi-bar" style="width:100%"></div></div>
+</div>
+
 <!-- ── WELCOME ───────────────────────────────────────────────── -->
 <div id="s-welcome" class="screen">
   <div class="welcome-wrap">
@@ -792,11 +850,12 @@ html, body {
 <!-- ── SESSION (QUIZ) — same structure as test_student.html ────── -->
 <div id="s-session" class="screen">
 
-  <!-- Top bar: student avatar + name + level -->
+  <!-- Top bar: student avatar + name + level + timer -->
   <div class="q-topbar">
     <div class="q-avatar" id="q-avatar">A</div>
     <div class="q-student-name" id="q-name">—</div>
     <div class="q-level" id="q-level">L1</div>
+    <div class="session-timer" id="session-timer">03:00</div>
   </div>
 
   <!-- Quiz body: answer-arena card (copied 1:1 from test_student.html) -->
@@ -1062,7 +1121,7 @@ async function init() {
   if (session.source === 'firebase' && session.session_status !== 'active') { renderNoSession(session); show('nosession'); return; }
   if (S.students.length === 0) { renderNoSession(session); show('nosession'); return; }
 
-  renderWelcome(); show('welcome');
+  renderRoster(); show('roster');
 }
 
 async function getJSON(url) {
@@ -1369,6 +1428,78 @@ function updateTapBtn() {
   }
 }
 
+// ── Roster screen ─────────────────────────────────────────────
+function renderRoster() {
+  const s     = S.session;
+  const color = s.color || SUBJ_COLOR[s.subject] || '#3b63f5';
+
+  document.getElementById('ro-title').textContent =
+    `${s.subject}${s.chapter ? ' · ' + s.chapter : ''}`;
+  document.getElementById('ro-sub').textContent =
+    `${S.students.length} students · ${s.day_label || fmtDate(s.date)}`;
+
+  document.getElementById('ro-list').innerHTML = S.students.map((st, i) => {
+    const bg      = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    const initials = st.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    return `<div class="roster-card">
+      <div class="roster-num">${i + 1}</div>
+      <div class="roster-avatar" style="background:${bg}">${initials}</div>
+      <div class="roster-info">
+        <div class="roster-name">${st.name}</div>
+        <div class="roster-level">${st.level || 'L1'}</div>
+      </div>
+      <div class="roster-status" style="background:${color}15;color:${color}">Pending</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 3-minute session timer ─────────────────────────────────────
+let S_timer = { interval: null, remaining: 180 };
+
+function startSessionTimer() {
+  clearInterval(S_timer.interval);
+  S_timer.remaining = 180;
+  updateTimerDisplay();
+  S_timer.interval = setInterval(() => {
+    S_timer.remaining--;
+    updateTimerDisplay();
+    if (S_timer.remaining <= 0) {
+      clearInterval(S_timer.interval);
+      finishStudent();   // auto-move when time is up
+    }
+  }, 1000);
+}
+
+function stopSessionTimer() { clearInterval(S_timer.interval); }
+
+function updateTimerDisplay() {
+  const el = document.getElementById('session-timer');
+  if (!el) return;
+  const m   = Math.floor(S_timer.remaining / 60);
+  const s   = S_timer.remaining % 60;
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.classList.toggle('urgent', S_timer.remaining <= 30);
+}
+
+// ── 5-second filler between students ──────────────────────────
+function showFiller(nextStudent, onDone) {
+  const el    = document.getElementById('fi-next');
+  const bar   = document.getElementById('fi-bar');
+  const count = document.getElementById('fi-count');
+  if (el)    el.textContent  = nextStudent ? `Next: ${nextStudent.name}` : 'All done!';
+  if (bar)   bar.style.width = '100%';
+  if (count) count.textContent = '5';
+  show('filler');
+
+  let t = 5;
+  const iv = setInterval(() => {
+    t--;
+    if (count) count.textContent = t;
+    if (bar)   bar.style.width = (t / 5 * 100) + '%';
+    if (t <= 0) { clearInterval(iv); onDone(); }
+  }, 1000);
+}
+
 // ── Session flow ──────────────────────────────────────────────
 function beginSession() { S.idx = 0; S.stage = 0; startStudent(); }
 
@@ -1377,6 +1508,7 @@ function startStudent() {
   S.stage = 0;
   renderHeader(S.students[S.idx]);
   renderStage();
+  startSessionTimer();
   show('session');
 }
 
@@ -1429,31 +1561,30 @@ function renderStage() {
 
   renderSteps();
 
-  // Buttons
+  // Buttons — teacher can tap Next at any time, or wait for auto-advance
   const btnNext = document.getElementById('btn-tap');
   const btnBack = document.getElementById('btn-back');
   const btnSkip = document.getElementById('btn-skip');
-  btnNext.disabled = !stg.requires_tap;
-  btnNext.textContent = stg.requires_tap ? 'Next →' : 'Please wait…';
+  if (btnNext) { btnNext.disabled = false; btnNext.textContent = 'Next →'; }
   if (btnBack) btnBack.disabled = S.stage === 0;
-  if (btnSkip) btnSkip.disabled = !stg.requires_tap;
+  if (btnSkip) btnSkip.style.display = stg.requires_tap ? 'block' : 'none';
 
   // Audio
   if (stg.audio_file) playAudio('/student/assets/assets/audio/' + stg.audio_file);
   else S.audio.pause();
 
-  // Auto-advance for non-tap stages
-  if (!stg.requires_tap && stg.duration_ms) {
-    S.timer = setTimeout(() => {
-      if (stg.triggers_level_up) showLevelUp();
-      else nextStage();
-    }, stg.duration_ms);
-  }
+  // Auto-advance: question stages auto-advance after 25s, others after duration_ms
+  const autoMs = stg.requires_tap
+    ? 25000                       // 25 sec for question stages (student answers verbally)
+    : (stg.duration_ms || 3000); // original timing for greeting/evaluating/closing
+  S.timer = setTimeout(() => {
+    if (stg.triggers_level_up) showLevelUp();
+    else nextStage();
+  }, autoMs);
 }
 
 function tapHandler() {
-  const stg = S.dialogue[S.stage];
-  if (!stg || !stg.requires_tap) return;
+  clearTimeout(S.timer);   // teacher taps Next early → cancel auto-advance
   nextStage();
 }
 
@@ -1510,26 +1641,18 @@ function buildConfetti() {
 
 // ── Between students ──────────────────────────────────────────
 function finishStudent() {
-  S.audio.pause(); clearTimeout(S.timer);
-  const done = S.students[S.idx];
+  S.audio.pause();
+  clearTimeout(S.timer);
+  stopSessionTimer();
+
   const next = S.students[S.idx + 1];
   if (!next) { showComplete(); return; }
 
-  document.getElementById('nx-done').textContent = done.name.split(' ')[0];
-
-  const nextColor  = AVATAR_COLORS[(S.idx + 1) % AVATAR_COLORS.length];
-  const nextInit   = next.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-  const av = document.getElementById('nx-avatar');
-  av.textContent = nextInit; av.style.background = nextColor;
-
-  document.getElementById('nx-name').textContent = next.name;
-  const lp = document.getElementById('nx-level');
-  const subColor = S.session.color || '#3b63f5';
-  lp.textContent = next.level || 'L1';
-  lp.style.background = subColor + '20'; lp.style.color = subColor;
-
-  document.getElementById('nx-progress').textContent = `${S.idx + 2} of ${S.students.length}`;
-  show('next');
+  // 5-second auto filler then next student
+  showFiller(next, () => {
+    S.idx++;
+    startStudent();
+  });
 }
 
 function startNextStudent() { S.idx++; S.stage = 0; startStudent(); }
